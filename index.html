@@ -2,629 +2,454 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <!-- Essential for responsiveness -->
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Terminal Portfolio :: AxoGM</title>
+
+        <!-- Tailwind CSS CDN -->
+        <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+        <!-- Vue.js 3 CDN -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+        <!-- jQuery CDN REMOVED - Not actively used, optimizing dependencies -->
+        <!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->
+
+        <!-- Google Fonts (Fira Code) -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+
         <style>
+            /* Define custom CSS variables for theme colors */
             :root {
-                /* Core Theme */
-                --background: #1a1b26;
-                --text: #c0caf5;
-                --font: "Fira Code", "Courier New", Courier, monospace;
-                /* Standard Terminal Colors */
-                --black: #15161e;
-                --red: #f7768e;   /* Error */
-                --green: #9ece6a; /* Success */
-                --yellow: #e0af68;/* Warning */
-                --blue: #7aa2f7;  /* Info / Links */
-                --magenta: #bb9af7;/* Accent / Prompt User */
-                --cyan: #7dcfff; /* Accent / Prompt Host / Banner */
-                --white: #a9b1d6; /* Normal output */
-
-                /* Specific Roles */
-                --prompt-user: var(--magenta);
-                --prompt-at: var(--text);
-                --prompt-host: var(--cyan);
-                --prompt-separator: var(--text);
-                --prompt-path: var(--blue);
-                --prompt-char: var(--green);
-                --command: var(--white);
-                --output: var(--white);
-                --output-dim: #5c6370;
-                --error: var(--red);
-                --success: var(--green);
-                --warning: var(--yellow);
-                --info: var(--blue);
-                --link: var(--blue);
-                --cursor: var(--green);
-                --scrollbar-thumb: var(--green);
-                --scrollbar-track: var(--black);
+                --color-background: #1a1b26; /* Tokyo Night background */
+                --color-text: #c0caf5;       /* Default text */
+                --color-black: #15161e;      /* Darker black */
+                --color-red: #f7768e;        /* Red */
+                --color-green: #9ece6a;      /* Green */
+                --color-yellow: #e0af68;     /* Yellow */
+                --color-blue: #7aa2f7;       /* Blue */
+                --color-magenta: #bb9af7;    /* Magenta */
+                --color-cyan: #7dcfff;       /* Cyan */
+                --color-white: #a9b1d6;      /* Brighter white/text */
+                --color-dim: #5c6370;        /* Dim color */
             }
 
-            /* Import Fira Code font */
-            @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
-
-            * {
-                box-sizing: border-box;
-            }
-
-            html,
             body {
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                background-color: var(--background);
-                color: var(--text);
-                font-family: var(--font);
-                /* Slightly larger base font size for better mobile readability */
-                font-size: 15px;
-                line-height: 1.5; /* Increased line-height for readability */
-                /* Prevent text selection background from overriding terminal colors */
-                /* You might want to customize selection colors further */
-                /* ::selection { background: rgba(125, 207, 255, 0.3); } */
+                font-family: "Fira Code", "Courier New", Courier, monospace;
+                background-color: var(--color-background);
+                color: var(--color-text);
+                line-height: 1.5; /* Improved spacing */
             }
 
-            #terminal {
-                height: 100vh; /* Full viewport height */
-                /* Standard padding for larger screens */
-                padding: 15px;
-                overflow-y: auto; /* Enable vertical scrolling */
-                overflow-x: hidden; /* Prevent horizontal scroll */
-                display: flex;
-                flex-direction: column;
-                cursor: text;
+            /* Custom Scrollbar (Tailwind doesn't handle easily) */
+            ::-webkit-scrollbar { width: 10px; }
+            ::-webkit-scrollbar-track { background: var(--color-black); }
+            ::-webkit-scrollbar-thumb {
+                background-color: var(--color-green); border-radius: 5px; border: 2px solid var(--color-black);
             }
+            html { scrollbar-width: thin; scrollbar-color: var(--color-green) var(--color-black); }
 
-            #output {
-                flex-grow: 1;
-                white-space: pre-wrap;
-                word-wrap: break-word; /* Ensure long words break */
-                overflow-wrap: break-word; /* Modern equivalent */
-                 min-height: 0; /* Prevent flexbox issues */
+            /* --- Specific element styling using CSS variables --- */
+            .prompt-user { color: var(--color-magenta); }
+            .prompt-host { color: var(--color-cyan); }
+            .prompt-path { color: var(--color-blue); }
+            .prompt-char { color: var(--color-green); }
+
+            .output-error   { color: var(--color-red); }
+            .output-success { color: var(--color-green); }
+            .output-warning { color: var(--color-yellow); }
+            .output-info    { color: var(--color-blue); }
+            .output-cyan    { color: var(--color-cyan); }
+            .output-blue    { color: var(--color-blue); }
+            .output-magenta { color: var(--color-magenta); }
+            .output-yellow  { color: var(--color-yellow); }
+            .output-red     { color: var(--color-red); }
+            .output-dim     { color: var(--color-dim); }
+            .output-directory { color: var(--color-cyan); font-weight: bold;}
+            .output-file { color: var(--color-white); }
+
+            .neofetch-key {
+                color: var(--color-cyan);
+                font-weight: bold;
+                min-width: 85px; /* Adjusted alignment */
+                display: inline-block;
+                margin-right: 0.5rem;
             }
-
-            .output-line {
-                margin-bottom: 3px; /* Slightly more space between lines */
-                min-height: 1.5em; /* Ensure line takes up space */
-                 word-break: break-all; /* Force break even in middle of word if needed */
-            }
-
-            /* --- Prompt Styling --- */
-            .prompt-line {
-                display: flex;
-                align-items: baseline; /* Align to baseline for better text flow */
-                margin-top: 5px;
-                flex-shrink: 0; /* Prevent prompt line from shrinking */
-            }
-
-            .prompt {
-                margin-right: 8px;
-                white-space: nowrap;
-            }
-            .prompt-user { color: var(--prompt-user); font-weight: bold; }
-            .prompt-at { color: var(--prompt-at); }
-            .prompt-host { color: var(--prompt-host); }
-            .prompt-separator { color: var(--prompt-separator); }
-            .prompt-path { color: var(--prompt-path); }
-            .prompt-char { color: var(--prompt-char); margin-left: 2px; font-weight: bold; }
-
-
-            #commandInput {
-                background: transparent;
-                border: none;
-                color: var(--command);
-                font-family: inherit;
-                font-size: inherit;
-                line-height: inherit; /* Match line height */
-                outline: none;
-                flex-grow: 1; /* Takes remaining width */
-                caret-color: var(--cursor);
-                font-weight: normal;
-                height: 1.5em; /* Match line height */
-                padding: 0;
-                min-width: 0; /* Allow input to shrink if needed */
-            }
-
-             /* --- Output Styling --- */
-            .command-echo {
-                opacity: 0.9;
-            }
-            .command-echo .prompt { /* Style inherited */ }
-            .command-echo .command-text { color: var(--command); }
-
-            .output-text {
-                color: var(--output);
-                display: inline; /* Let text flow naturally */
-            }
-            .output-text.error   { color: var(--error); }
-            .output-text.success { color: var(--success); }
-            .output-text.warning { color: var(--warning); }
-            .output-text.info    { color: var(--info); }
-            .output-text.cyan    { color: var(--cyan); }
-            .output-text.blue    { color: var(--blue); }
-            .output-text.magenta { color: var(--magenta); }
-            .output-text.yellow  { color: var(--yellow); }
-            .output-text.red     { color: var(--red); }
-            .output-text.dim     { color: var(--output-dim); }
-
-             /* File/Directory Listings */
-             .output-text.directory { color: var(--cyan); font-weight: bold;}
-             .output-text.file { color: var(--white); }
-
-            .output-text a {
-                color: var(--link);
-                text-decoration: underline;
-                text-underline-offset: 3px;
-                 word-break: break-all; /* Ensure long links break */
-            }
-            .output-text a:hover {
-                filter: brightness(1.3);
-                text-decoration: none;
-            }
-
-            /* Custom Scrollbar */
-            #terminal::-webkit-scrollbar { width: 10px; }
-            #terminal::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-            #terminal::-webkit-scrollbar-thumb {
-                background-color: var(--scrollbar-thumb);
-                border-radius: 5px;
-                border: 2px solid var(--scrollbar-track);
-            }
-            #terminal {
-                scrollbar-width: thin;
-                scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-            }
-
-            /* --- Media Queries for Responsiveness --- */
-            @media (max-width: 768px) { /* Target tablets and smaller */
-                #terminal {
-                    /* Reduce padding on smaller screens */
-                    padding: 10px;
-                    /* Consider slightly larger font for phones within this range if needed */
-                    /* font-size: 16px; */
-                }
-
-                .output-line {
-                    margin-bottom: 4px; /* Slightly more vertical space */
-                }
-                 /* You could potentially hide the scrollbar visually on mobile
-                    if touch scrolling feels natural enough */
-                /* #terminal::-webkit-scrollbar { display: none; }
-                   #terminal { scrollbar-width: none; } */
-            }
-
-            @media (max-width: 480px) { /* Target smaller phones */
-                html, body {
-                    /* Ensure font isn't too large on very small screens */
-                    font-size: 14px;
-                    line-height: 1.4;
-                }
-                #terminal {
-                     padding: 8px; /* Even less padding */
-                }
-                .output-line {
-                    min-height: 1.4em;
-                }
-                 #commandInput {
-                    height: 1.4em;
-                }
-            }
-
         </style>
+        <script>
+            // Configure Tailwind to understand our theme colors via CSS variables
+             tailwind.config = {
+                theme: { extend: {
+                        colors: {
+                            // Map names to the CSS variables for Tailwind utility classes
+                            background: 'var(--color-background)', text: 'var(--color-text)',
+                            black: 'var(--color-black)', red: 'var(--color-red)',
+                            green: 'var(--color-green)', yellow: 'var(--color-yellow)',
+                            blue: 'var(--color-blue)', magenta: 'var(--color-magenta)',
+                            cyan: 'var(--color-cyan)', white: 'var(--color-white)',
+                            dim: 'var(--color-dim)',
+                            'prompt-user': 'var(--color-magenta)', 'prompt-host': 'var(--color-cyan)',
+                            'prompt-path': 'var(--color-blue)', 'prompt-char': 'var(--color-green)',
+                            'command': 'var(--color-white)', 'link': 'var(--color-blue)',
+                            'cursor': 'var(--color-green)',
+                            'neofetch-key': 'var(--color-cyan)',
+                            'value': 'var(--color-white)'
+                        },
+                        fontFamily: { mono: ['Fira Code', 'Courier New', 'monospace'], }
+                    } } }
+        </script>
     </head>
-    <body>
-        <!-- Main terminal container handles clicks to focus input -->
-        <div id="terminal" onclick="focusInput()">
-            <!-- Output area -->
-            <div id="output"></div>
-            <!-- Input line -->
-            <div class="prompt-line">
-                <span class="prompt">
-                    <span class="prompt-user">user</span><span class="prompt-at">@</span><span class="prompt-host">portfolio</span><span class="prompt-separator">:</span><span class="prompt-path">~</span><span class="prompt-char">$</span>
-                </span>
-                <input
+    <body class="bg-background text-text font-mono text-[15px] leading-normal antialiased">
+
+        <div id="app" class="h-screen flex flex-col" @click="focusInput">
+
+            <!-- Terminal Output Area -->
+            <div ref="terminal" class="flex-grow overflow-y-auto overflow-x-hidden p-3 md:p-4">
+                 <div v-for="line in outputLines" :key="line.id" class="output-line mb-1 min-h-[1.5em] break-words">
+
+                    <!-- Neofetch Style Block -->
+                    <div v-if="line.type === 'neofetch'" class="flex flex-col sm:flex-row gap-4 md:gap-6 mb-2">
+                        <div class="flex-shrink-0 mx-auto sm:mx-0">
+                             <!-- Use a placeholder if icon.png not found. Create placeholder.png or remove onerror -->
+                             <img :src="line.data.imgPath"
+                                  @error="($event) => { $event.target.style.display='none'; console.warn('icon.png not found.') }"
+                                  alt="Icon"
+                                  class="w-24 h-auto md:w-32 object-contain">
+                        </div>
+                        <div class="flex-grow min-w-0"> <!-- Added min-w-0 for flex wrapping -->
+                             <div class="mb-1">
+                                <span class="text-prompt-user font-bold">{{ line.data.user }}</span><span class="text-text">@</span><span class="text-prompt-host">{{ line.data.host }}</span>
+                             </div>
+                            <div class="border-b border-dim/50 w-1/2 mb-2"></div> <!-- Dimmer border -->
+                             <div v-for="item in line.data.info" :key="item.key" class="flex items-start text-sm md:text-[15px]">
+                                 <span class="neofetch-key flex-shrink-0">{{ item.key }}:</span>
+                                 <!-- v-html needed for links, ensure content is trusted -->
+                                 <span class="text-value break-all" v-html="item.value"></span>
+                             </div>
+                        </div>
+                     </div>
+
+                    <!-- Regular Command Echo -->
+                    <span v-else-if="line.type === 'command-echo'" class="opacity-90" v-html="line.html"></span>
+                     <!-- Other Output types -->
+                    <span v-else :class="['output-text', line.type ? 'output-' + line.type : '']" v-html="line.html"></span>
+                 </div>
+            </div>
+
+            <!-- Input Line -->
+            <div class="prompt-line flex items-baseline mt-1 p-3 md:p-4 pt-0 flex-shrink-0">
+                 <span class="prompt mr-2 whitespace-nowrap">
+                     <span class="prompt-user font-bold">{{ promptUser }}</span><span class="text-text">@</span><span class="prompt-host">{{ promptHost }}</span><span class="text-text">:</span><span class="prompt-path">{{ currentPath }}</span><span class="prompt-char font-bold ml-px">{{ promptChar }}</span>
+                 </span>
+                 <input
+                    ref="commandInput"
                     type="text"
-                    id="commandInput"
-                    autofocus
-                    autocomplete="off"
-                    spellcheck="false"
-                    autocapitalize="none" /* Prevent auto-capitalization on mobile */
-                />
+                    class="bg-transparent border-none text-command flex-grow outline-none p-0 h-[1.5em] min-w-0 font-mono text-[15px] caret-cursor"
+                    v-model="currentCommand"
+                    @keydown.enter.prevent="handleEnter"
+                    @keydown.up.prevent="handleArrowUp"
+                    @keydown.down.prevent="handleArrowDown"
+                    @keydown.tab.prevent="handleTab"
+                    @keydown.ctrl.l.prevent="clearOutput"
+                    autofocus autocomplete="off" spellcheck="false" autocapitalize="none"
+                 />
             </div>
         </div>
 
         <script>
-            'use strict';
+            const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+            const initialLoadTime = Date.now();
 
-            const terminal = document.getElementById("terminal");
-            const output = document.getElementById("output");
-            const commandInput = document.getElementById("commandInput");
+            createApp({
+                setup() {
+                    // --- Reactive State ---
+                    const outputLines = ref([]);
+                    const currentCommand = ref('');
+                    const commandHistory = reactive([]);
+                    const historyIndex = ref(-1);
+                    const fetchedProjects = ref(null);
+                    const githubUsername = ref(null);
 
-            if (!terminal || !output || !commandInput) {
-                console.error("FATAL: Terminal core elements not found!");
-                alert("Error initializing terminal interface. Check console.");
-                throw new Error("Terminal core elements missing.");
-            }
+                    // --- Constants & Config ---
+                    const promptUser = "user";
+                    const promptHost = "portfolio";
+                    const currentPath = ref("~");
+                    const promptChar = "$";
+                    const portfolioData = reactive({ // Define static portfolio data here
+                        name: "AxoGM",
+                        title: "Developer | Planning | Working on Project",
+                        contact: { email: "creategm10@gmail.com" },
+                        social: {
+                            github: "https://github.com/TheCreateGM",
+                            linkedin: "https://www.linkedin.com/in/axo-gm-9758832b0/",
+                            website: "http://axogmweb.unaux.com"
+                        },
+                        about: [ /* Shortened for brevity */
+                            "Interactive terminal portfolio.",
+                            "Use 'help' for commands.",
+                        ],
+                         skills: [ "JavaScript", "Python", "HTML/CSS", "Vue.js", "Node.js", "Git"],
+                         // No banner text needed now
+                    });
 
-            const promptUser = "user";
-            const promptHost = "portfolio";
-            const promptPath = "~";
-            const promptChar = "$";
+                    // --- Template Refs ---
+                    const terminal = ref(null);
+                    const commandInput = ref(null);
 
-            // --- PORTFOLIO CONTENT ---
-            const portfolioData = {
-                name: "AxoGM",
-                title: "Developer | Studying & Planning | Working on project",
-                contact: { email: "creategm10@gmail.com" },
-                social: {
-                    github: "https://github.com/TheCreateGM",
-                    linkedin: "https://www.linkedin.com/in/axo-gm-9758832b0/",
-                },
-                about: [
-                    "Welcome to my interactive terminal portfolio!",
-                    "Passionate about technology and constantly learning.",
-                    "Use 'help' to see available commands.",
-                ],
-                skills: [ "JavaScript", "HTML", "CSS", "Git", "Python", "Node.js", "React (Learning)", "SQL/NoSQL (Learning)" ],
-                banner: [
-                    " █████╗ ██╗  ██╗ ██████╗  ██████╗ ███╗   ███╗",
-                    "██╔══██╗╚██╗██╔╝██╔═══██╗██╔════╝ ████╗ ████║",
-                    "███████║ ╚███╔╝ ██║   ██║██║  ███╗██╔████╔██║",
-                    "██╔══██║ ██╔██╗ ██║   ██║██║   ██║██║╚██╔╝██║",
-                    "██║  ██║██╔╝ ██╗╚██████╔╝╚██████╔╝██║ ╚═╝ ██║",
-                    "╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝     ╚═╝",
-                    `\nWelcome to the Terminal Portfolio of AxoGM!`,
-                    `Type 'help' for commands.`,
-                ],
-                fetchedProjects: null,
-                githubUsername: null
-            };
-            // --- END OF EDITABLE SECTION ---
-
-            function getPromptHtml() {
-                 return `<span class="prompt"><span class="prompt-user">${promptUser}</span><span class="prompt-at">@</span><span class="prompt-host">${promptHost}</span><span class="prompt-separator">:</span><span class="prompt-path">${promptPath}</span><span class="prompt-char">${promptChar}</span></span>`;
-            }
-
-            function scrollToBottom() {
-                requestAnimationFrame(() => {
-                     // This logic helps prevent auto-scrolling away from the input
-                     // when the mobile keyboard appears if the user manually scrolled slightly.
-                     // It scrolls down only if already very close to the bottom.
-                     const isScrolledToBottom = terminal.scrollHeight - terminal.clientHeight <= terminal.scrollTop + 40; // Slightly larger buffer
-                    if (isScrolledToBottom || terminal.scrollHeight <= terminal.clientHeight) {
-                        terminal.scrollTop = terminal.scrollHeight;
-                    }
-                });
-            }
-
-            function focusInput() {
-                commandInput.focus();
-                // On some mobile browsers, explicitly trying to scroll after focus might be needed
-                // if the browser's default behavior isn't sufficient. Test first.
-                // setTimeout(scrollToBottom, 100); // Optional delay
-            }
-
-            function appendOutput(htmlContent, type = "output-text") {
-                try {
-                    const lineDiv = document.createElement("div");
-                    lineDiv.classList.add("output-line");
-
-                    if (type === 'command-echo') {
-                        lineDiv.classList.add('command-echo');
-                        lineDiv.innerHTML = htmlContent;
-                    }
-                    else {
-                        const contentSpan = document.createElement("span");
-                        contentSpan.classList.add("output-text");
-                        if (type !== "output-text") {
-                             contentSpan.classList.add(type);
-                        }
-                        contentSpan.innerHTML = String(htmlContent);
-                        lineDiv.appendChild(contentSpan);
-                    }
-
-                    output.appendChild(lineDiv);
-                    scrollToBottom(); // Scroll after each line append
-
-                } catch (error) {
-                     console.error("Error in appendOutput:", error, "Content:", htmlContent, "Type:", type);
-                     try { // Failsafe error message
-                         const errorDiv = document.createElement("div");
-                         errorDiv.textContent = `[Terminal Error: Append failed. Check console.]`;
-                         errorDiv.style.color = 'red';
-                         output.appendChild(errorDiv);
-                         scrollToBottom();
-                     } catch (finalError) {
-                         console.error("FATAL: Could not append error message.", finalError);
-                     }
-                }
-            }
-
-            async function fetchGitHubProjects(username) {
-                // (Function remains the same as previous version)
-                if (!username) return new Error("GitHub username is missing or invalid.");
-                const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=50`;
-                appendOutput(`Fetching public repositories for ${username}...`, 'warning');
-                try {
-                    const response = await fetch(apiUrl);
-                    if (!response.ok) {
-                        let errorMsg = `Failed to fetch GitHub repositories. Status: ${response.status}`;
-                        if (response.status === 404) errorMsg += ` (User '${username}' not found?)`;
-                        else if (response.status === 403) errorMsg += ` (API rate limit exceeded?)`;
-                        else errorMsg += ` (${response.statusText})`;
-                        return new Error(errorMsg);
-                    }
-                    const data = await response.json();
-                    if (!Array.isArray(data)) return new Error("Unexpected API response format from GitHub.");
-                    const projects = data.map(repo => ({
-                        name: repo.name,
-                        description: repo.description || "No description.",
-                        url: repo.html_url,
-                        stars: repo.stargazers_count,
-                        language: repo.language || "N/A"
-                    }));
-                    appendOutput(`Successfully fetched ${projects.length} public repositories.`, 'success');
-                    return projects;
-                } catch (error) {
-                    console.error("GitHub Fetch error:", error);
-                    let errorMsg = "Network error or exception during GitHub fetch.";
-                    if (error instanceof TypeError && error.message.includes('fetch')) {
-                         errorMsg = "Network error: Could not connect to GitHub API.";
-                    }
-                    return new Error(errorMsg);
-                }
-            }
-
-
-            const commandHistory = [];
-            let historyIndex = -1;
-
-            // --- COMMAND DEFINITIONS ---
-            const commands = {
-                // (Commands remain the same as previous version)
-                help: () => {
-                    const availableCommands = Object.keys(commands).filter(cmd => typeof commands[cmd] === 'function').sort().join("  ");
-                     appendOutput("Available commands:", "info");
-                     appendOutput(availableCommands);
-                    appendOutput(`\nUse ArrowUp/Down for history, Tab for completion, Ctrl+L to clear.`, "dim");
-                },
-                about: () => {
-                    if (!portfolioData) return appendOutput("Error: Portfolio data not loaded.", "error");
-                    appendOutput(`--- About ${portfolioData.name || 'Me'} ---`, "info");
-                    if (portfolioData.title) appendOutput(`${portfolioData.title}`, "cyan");
-                    (portfolioData.about || []).forEach((line) => appendOutput(`> ${line}`));
-                },
-                 banner: () => {
-                     if (!portfolioData || !portfolioData.banner) return appendOutput("Error: Banner data missing.", "error");
-                    portfolioData.banner.forEach((line) => appendOutput(line, 'cyan'));
-                 },
-                 projects: () => {
-                    if (!portfolioData) return appendOutput("Error: Portfolio data not loaded.", "error");
-                    appendOutput("--- GitHub Projects ---", "info");
-                    const projects = portfolioData.fetchedProjects;
-                    if (projects instanceof Error) appendOutput(`Error loading projects: ${projects.message}`, "error");
-                    else if (projects === null) appendOutput("Projects are loading or fetch failed initially.", "warning");
-                    else if (!Array.isArray(projects)) appendOutput("Project data is corrupted.", "error");
-                    else if (projects.length === 0) appendOutput(`No public repositories found for '${portfolioData.githubUsername || 'user'}'.`, "warning");
-                    else {
-                        projects.forEach((p) => {
-                             let langClass = 'dim';
-                             if (p.language) {
-                                const langLower = p.language.toLowerCase();
-                                if (langLower === 'javascript') langClass = 'yellow';
-                                else if (langLower === 'python') langClass = 'blue';
-                                else if (langLower === 'html') langClass = 'red';
-                                else if (langLower === 'css') langClass = 'magenta';
-                                else if (langLower === 'typescript') langClass = 'blue';
-                                else if (langLower === 'shell' || langLower === 'bash') langClass = 'green';
-                             }
-                             let projectLine = `  <span class="output-text success">•</span> <span class="output-text file">${p.name}</span>`;
-                             projectLine += ` <span class="output-text ${langClass}">[${p.language}]</span>`;
-                             projectLine += ` <span class="output-text yellow">(★ ${p.stars})</span>`;
-                             projectLine += `: ${p.description}`;
-                             if (p.url) projectLine += ` (<a href="${p.url}" target="_blank">${p.url}</a>)`;
-                             appendOutput(projectLine);
+                    // --- Core Methods ---
+                    const focusInput = () => commandInput.value?.focus();
+                    const scrollToBottom = () => { // Scrolls if near bottom
+                         nextTick(() => {
+                           const el = terminal.value;
+                           if (el) {
+                                const buffer = 60; // Px buffer
+                                const isScrolledToBottom = el.scrollHeight - el.clientHeight <= el.scrollTop + buffer;
+                                if (isScrolledToBottom || el.scrollHeight <= el.clientHeight) {
+                                    el.scrollTop = el.scrollHeight;
+                                }
+                            }
                         });
-                         appendOutput(`\n(Showing top ${projects.length} fetched public repos)`, "dim");
-                    }
-                },
-                 contact: () => {
-                    if (!portfolioData || !portfolioData.contact) return appendOutput("Error: Contact data missing.", "error");
-                    appendOutput("--- Contact ---", "info");
-                    if (portfolioData.contact.email) appendOutput(`Email: <a href="mailto:${portfolioData.contact.email}">${portfolioData.contact.email}</a>`);
-                    else appendOutput("No contact email provided.", "warning");
-                 },
-                 social: () => {
-                     if (!portfolioData || !portfolioData.social) return appendOutput("Error: Social links data missing.", "error");
-                     appendOutput("--- Social Links ---", "info");
-                     const socialEntries = Object.entries(portfolioData.social);
-                     if (socialEntries.length === 0) appendOutput("No social links provided.", "warning");
-                     else {
-                         socialEntries.forEach(([platform, url]) => {
-                             if (url) {
-                                 const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
-                                 appendOutput(`<span class="output-text cyan">${platformName}:</span> <a href="${url}" target="_blank">${url}</a>`);
+                    };
+
+                    const appendOutput = (content, type = "text") => { // Handles different output types
+                        const newId = Date.now() + Math.random();
+                        if (type === 'neofetch') {
+                            if (typeof content !== 'object' || !content.imgPath) {
+                                console.error("Invalid data provided for neofetch type:", content);
+                                outputLines.value.push({ id: newId, type: 'error', html: "Error: Invalid banner data."});
+                            } else {
+                                outputLines.value.push({ id: newId, type: 'neofetch', data: content });
+                            }
+                        } else {
+                            outputLines.value.push({ id: newId, type, html: String(content) });
+                        }
+                        scrollToBottom();
+                    };
+
+                    const getPromptHtml = () => { // Generates prompt HTML for echo
+                        return `<span class="prompt mr-2 whitespace-nowrap"><span class="prompt-user font-bold">${promptUser}</span><span class="text-text">@</span><span class="prompt-host">${promptHost}</span><span class="text-text">:</span><span class="prompt-path">${currentPath.value}</span><span class="prompt-char font-bold ml-px">${promptChar}</span></span>`;
+                     };
+
+                     const runCommand = (commandName, args) => { // Executes command logic
+                          if (commands[commandName]) {
+                             try { commands[commandName](args); } catch (error) {
+                                console.error(`Cmd Err [${commandName}]:`, error);
+                                appendOutput(`Runtime error: ${error.message}`, "error");
                              }
-                         });
-                     }
-                 },
-                 skills: () => {
-                    if (!portfolioData || !portfolioData.skills) return appendOutput("Error: Skills data missing.", "error");
-                    appendOutput("--- Skills ---", "info");
-                    if (portfolioData.skills.length === 0) appendOutput("No skills listed.", "warning");
-                    else {
-                        const skillsHtml = portfolioData.skills.map((skill, index) => {
-                             const colorClass = index % 3 === 0 ? 'cyan' : (index % 3 === 1 ? 'yellow' : 'magenta');
-                             return `<span class="output-text ${colorClass}">${skill}</span>`;
-                        }).join('<span class="output-text dim"> | </span>');
-                         appendOutput(skillsHtml);
-                    }
-                },
-                 clear: () => { output.innerHTML = ""; },
-                 date: () => { appendOutput(new Date().toLocaleString(), 'success'); },
-                 echo: (args) => { appendOutput(args.join(" ")); },
-                 pwd: () => { appendOutput(`/home/${promptUser}`, 'info'); },
-                 ls: () => {
-                    appendOutput("<span class='directory'>drwxr-xr-x</span> about", 'output-text');
-                    appendOutput("<span class='directory'>drwxr-xr-x</span> projects", 'output-text');
-                    appendOutput("<span class='directory'>drwxr-xr-x</span> skills", 'output-text');
-                    appendOutput("<span class='file'>-rw-r--r--</span> contact.info", 'output-text');
-                    appendOutput("<span class='file'>-rw-r--r--</span> social.links", 'output-text');
-                    appendOutput("\nHint: Use commands like 'about', 'projects', etc.", "dim");
-                 },
-                 uname: () => { appendOutput(`AxoTerm Portfolio v1.2 on ${navigator.platform || 'WebApp'} (JS Kernel)`, 'info'); },
-                 whoami: () => { appendOutput(promptUser, 'prompt-user'); },
-                 sudo: () => { appendOutput(`Permission denied for user ${promptUser}. Try again? Nah.`, "error"); },
-            };
+                         } else { appendOutput(`command not found: ${commandName}`, "error"); }
+                     };
 
-            // --- COMMAND PROCESSING ---
-            function processCommand(commandString) {
-                // (Function remains the same as previous version)
-                 const trimmedCommand = commandString.trim();
-                if (!trimmedCommand) {
-                    scrollToBottom();
-                    commandInput.value = "";
-                    return;
-                }
-                const parts = trimmedCommand.split(" ");
-                const commandName = parts[0].toLowerCase();
-                const args = parts.slice(1);
-                 if (commandHistory.length === 0 || commandHistory[commandHistory.length - 1] !== trimmedCommand) {
-                    commandHistory.push(trimmedCommand);
-                }
-                historyIndex = commandHistory.length;
-                 const promptHtml = getPromptHtml();
-                 appendOutput(`${promptHtml} <span class="command-text">${commandString}</span>`, "command-echo");
-                if (commands[commandName]) {
-                    try { commands[commandName](args); }
-                    catch (error) {
-                        console.error(`Runtime error executing command '${commandName}':`, error);
-                        appendOutput(`Runtime error: ${error.message}. Check console (F12).`, "error");
-                    }
-                } else { appendOutput(`command not found: ${commandName}. Type 'help'.`, "error"); }
-                 commandInput.value = "";
-                 scrollToBottom();
-            }
+                     const processCurrentCommand = () => { // Handles 'Enter' key press
+                         const commandStr = currentCommand.value.trim();
+                         if (!commandStr) { scrollToBottom(); return; }
 
+                         if (!commandHistory.includes(commandStr)) {
+                             commandHistory.push(commandStr);
+                         }
+                         historyIndex.value = commandHistory.length; // Reset history index
 
-            // --- EVENT LISTENERS ---
-            function setupEventListeners() {
-                // console.log("Setting up event listeners..."); // Debug log
-                commandInput.addEventListener("keydown", (event) => {
-                    // Tab and Arrow keys might not be relevant/available on mobile keyboards
-                    // but keep them for desktop/external keyboard use.
-                    if (event.key === "Enter") {
-                        event.preventDefault();
-                        processCommand(commandInput.value);
-                        // Explicitly blur/focus might help some mobile keyboards hide after submit
-                        // commandInput.blur(); // Optional: test if needed
-                        // setTimeout(focusInput, 50); // Optional: refocus after slight delay
-                    } else if (event.key === "ArrowUp") {
-                        event.preventDefault();
-                        if (commandHistory.length > 0) {
-                             historyIndex = Math.max(0, historyIndex - 1);
-                             commandInput.value = commandHistory[historyIndex] || "";
-                            requestAnimationFrame(() => commandInput.setSelectionRange(commandInput.value.length, commandInput.value.length));
-                        }
-                    } else if (event.key === "ArrowDown") {
-                        event.preventDefault();
-                        if (commandHistory.length > 0) {
-                            historyIndex = Math.min(commandHistory.length, historyIndex + 1);
-                             commandInput.value = commandHistory[historyIndex] || "";
-                            requestAnimationFrame(() => commandInput.setSelectionRange(commandInput.value.length, commandInput.value.length));
-                        }
-                    } else if (event.key === "Tab") {
-                        event.preventDefault(); // Tab likely won't work on mobile anyway
-                        const currentInput = commandInput.value.trim().toLowerCase().split(" ")[0];
-                        if (!currentInput) return;
-                        const possibleCommands = Object.keys(commands).filter(cmd => typeof commands[cmd] === 'function' && cmd.startsWith(currentInput));
-                        if (possibleCommands.length === 1) commandInput.value = possibleCommands[0] + " ";
-                        else if (possibleCommands.length > 1) {
-                             const promptHtml = getPromptHtml();
-                             appendOutput(`${promptHtml} <span class="command-text">${commandInput.value}</span>`, "command-echo");
-                            appendOutput(possibleCommands.join("    "), "info");
-                        }
-                    } else if (event.key === "l" && event.ctrlKey) {
-                        event.preventDefault(); // Ctrl+L also less relevant on mobile
-                        commands.clear();
-                    }
-                });
+                         appendOutput(`${getPromptHtml()} <span class="text-command">${currentCommand.value}</span>`, "command-echo");
+                         const parts = commandStr.split(" ");
+                         runCommand(parts[0].toLowerCase(), parts.slice(1));
 
-                // Use 'touchend' as a potential alternative/supplement to 'click' for mobile focus
-                // although 'click' often works fine. Test which feels better.
-                 terminal.addEventListener("click", (event) => {
-                     // console.log("Terminal clicked"); // Debug
-                     if (event.target.tagName !== 'A') {
-                        focusInput();
-                     }
-                 });
-                 // terminal.addEventListener("touchend", (event) => {
-                 //    if (event.target.tagName !== 'A') {
-                 //        focusInput();
-                 //    }
-                 // });
+                         currentCommand.value = ""; // Clear input
+                         scrollToBottom();
+                    };
+                    const clearOutput = () => { outputLines.value = []; };
 
-                 // console.log("Event listeners set up."); // Debug log
-            }
+                    const getUptime = () => { // Calculates uptime string
+                        const uptimeMs = Date.now() - initialLoadTime;
+                        const seconds = Math.floor(uptimeMs / 1000) % 60;
+                        const minutes = Math.floor(uptimeMs / (1000 * 60)) % 60;
+                        const hours = Math.floor(uptimeMs / (1000 * 60 * 60));
+                        let str = `${seconds}s`;
+                        if (minutes > 0 || hours > 0) str = `${minutes}m ` + str;
+                        if (hours > 0) str = `${hours}h ` + str;
+                        return str;
+                    };
 
-            // --- INITIALIZATION ---
-            async function initializeTerminal() {
-                console.log("Initializing terminal...");
-                try {
-                     // 1. Display Banner
-                     commands.banner();
-                     scrollToBottom(); // Ensure visibility
+                    // --- Command Definitions ---
+                     const commands = {
+                         help: () => { /* Unchanged */
+                            const available = Object.keys(commands).sort().join("  ");
+                            appendOutput("Available commands:", "info"); appendOutput(available, "text");
+                            appendOutput(`\nUp/Down for history, Tab complete, Ctrl+L clear.`, "dim");
+                         },
+                         about: () => { /* Unchanged */
+                            appendOutput(`--- About ${portfolioData.name} ---`, "info");
+                            if (portfolioData.title) appendOutput(`${portfolioData.title}`, "cyan");
+                            portfolioData.about.forEach(line => appendOutput(`> ${line}`));
+                         },
+                         banner: () => { // Constructs and outputs Neofetch data
+                             // Simulate simple OS detection (very basic)
+                             let os = "WebApp";
+                             const ua = navigator.userAgent;
+                             if (ua.includes("Win")) os = "Windows";
+                             else if (ua.includes("Mac")) os = "MacOS";
+                             else if (ua.includes("Linux")) os = "Linux";
+                             else if (ua.includes("Android")) os = "Android";
+                             else if (ua.includes("like Mac")) os = "iOS"; // Basic iOS detection
 
-                     // 2. Fetch Projects
-                     let githubUsername = null;
-                     if (portfolioData?.social?.github) { // Optional chaining
+                             const neofetchData = {
+                                imgPath: './icon.png', // Ensure this exists!
+                                user: promptUser, host: promptHost,
+                                info: [
+                                     { key: "OS", value: os }, // Simulated OS
+                                    { key: "Portfolio", value: portfolioData.name },
+                                     { key: "Status", value: portfolioData.title },
+                                     // Using v-html for these values with links
+                                    { key: "Contact", value: `<a href="mailto:${portfolioData.contact.email}" class="text-link underline hover:no-underline">${portfolioData.contact.email}</a>` },
+                                    { key: "GitHub", value: `<a href="${portfolioData.social.github}" target="_blank" class="text-link underline hover:no-underline">${portfolioData.social.github}</a>` },
+                                     { key: "LinkedIn", value: `<a href="${portfolioData.social.linkedin}" target="_blank" class="text-link underline hover:no-underline">Visit Profile</a>` },
+                                     { key: "Skills", value: (portfolioData.skills || []).slice(0, 6).join(', ') + (portfolioData.skills.length > 6 ? '...' : '') },
+                                     { key: "Shell", value: "VueTerm" },
+                                    { key: "Uptime", value: getUptime() },
+                                     { key: "Theme", value: "TokyoNight-ish" } // Fun detail
+                                 ]
+                             };
+                             appendOutput(neofetchData, 'neofetch');
+                         },
+                         projects: () => { // Renders fetched GitHub projects
+                             appendOutput("--- GitHub Projects ---", "info");
+                             const projects = fetchedProjects.value;
+                             if (projects instanceof Error) appendOutput(`Error: ${projects.message}`, "error");
+                             else if (projects === null) appendOutput("Loading projects or fetch failed...", "warning");
+                             else if (!Array.isArray(projects)) appendOutput("Project data format error.", "error");
+                             else if (projects.length === 0) appendOutput(`No public repositories found.`, "warning");
+                             else {
+                                 projects.forEach(p => { /* ... Existing project formatting logic ... */
+                                    let langClass = 'dim'; /* ... */
+                                    if (p.language) { const langLower = p.language.toLowerCase(); if (langLower === 'javascript') langClass = 'yellow'; else if (langLower === 'python') langClass = 'blue'; else if (langLower === 'html') langClass = 'red'; else if (langLower === 'css') langClass = 'magenta'; else if (langLower === 'typescript') langClass = 'blue'; else if (langLower === 'shell') langClass = 'green'; }
+                                    let lineHtml = ` <span class="output-success">•</span> <span class="output-file">${p.name}</span> <span class="output-${langClass}">[${p.language}]</span> <span class="output-yellow">(★ ${p.stars})</span>: ${p.description}`;
+                                    if (p.url) lineHtml += ` (<a href="${p.url}" target="_blank" class="text-link underline hover:no-underline">Link</a>)`; // Shorter link text
+                                    appendOutput(lineHtml);
+                                 });
+                                 appendOutput(`\n(Showing top ${projects.length} updated public repos)`, "dim");
+                             }
+                         },
+                        contact: () => { /* Unchanged */
+                             appendOutput("--- Contact ---", "info");
+                             if (portfolioData.contact.email) appendOutput(`Email: <a href="mailto:${portfolioData.contact.email}" class="text-link underline hover:no-underline">${portfolioData.contact.email}</a>`);
+                             else appendOutput("No email provided.", "warning");
+                         },
+                        social: () => { /* Unchanged */
+                             appendOutput("--- Social Links ---", "info");
+                             const entries = Object.entries(portfolioData.social);
+                             if (entries.length === 0) appendOutput("None provided.", "warning");
+                             else entries.forEach(([p, url]) => {
+                                 if (url) appendOutput(`<span class="output-cyan">${p.charAt(0).toUpperCase() + p.slice(1)}:</span> <a href="${url}" target="_blank" class="text-link underline hover:no-underline">${url}</a>`);
+                             });
+                         },
+                         skills: () => { /* Unchanged */
+                            appendOutput("--- Skills ---", "info");
+                            if (!portfolioData.skills?.length) appendOutput("None listed.", "warning");
+                            else {
+                               const skillsHtml = portfolioData.skills.map((skill, i) => { const cls = i % 3 === 0 ? 'cyan' : (i % 3 === 1 ? 'yellow' : 'magenta'); return `<span class="output-${cls}">${skill}</span>`; }).join('<span class="output-dim"> | </span>');
+                               appendOutput(skillsHtml);
+                            }
+                         },
+                         clear: clearOutput,
+                         date: () => { appendOutput(new Date().toLocaleString(), 'success'); },
+                         echo: (args) => { appendOutput(args.join(" ")); },
+                         pwd: () => { appendOutput(`/home/${promptUser}`, 'info'); },
+                         ls: () => { /* Unchanged */
+                            appendOutput("<span class='directory'>drwxr-xr-x</span> about", 'text'); appendOutput("<span class='directory'>drwxr-xr-x</span> projects", 'text'); appendOutput("<span class='file'>-rw-r--r--</span> contact", 'text'); appendOutput("<span class='file'>-rw-r--r--</span> social", 'text'); appendOutput("\nUse commands to view.", "dim");
+                         },
+                         uname: () => { appendOutput(`VueTerm v2.2 (Vue3/JS)`, 'info'); },
+                         whoami: () => { appendOutput(promptUser, 'magenta'); },
+                         sudo: () => { appendOutput(`Permission denied. This terminal is secure!`, "error"); },
+                     };
+
+                    // --- GitHub Fetch Logic (using native fetch) ---
+                    const fetchGitHubProjects = async (username) => {
+                         if (!username) return new Error("GitHub username missing.");
+                         const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=50`;
+                         appendOutput(`Fetching repos for ${username}...`, 'warning');
                          try {
-                             const url = new URL(portfolioData.social.github);
-                             githubUsername = url.pathname.split('/').filter(Boolean).pop();
-                             if (!githubUsername) throw new Error("Could not extract username.");
-                         } catch (e) {
-                             console.warn("Could not parse GitHub username:", e.message);
-                             appendOutput(`Warning: Invalid GitHub URL: ${portfolioData.social.github}`, "warning");
+                             const response = await fetch(apiUrl); // Native Fetch API
+                             if (!response.ok) return new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+                             const data = await response.json();
+                             if (!Array.isArray(data)) return new Error("Unexpected API response format.");
+                             appendOutput(`Fetched ${data.length} public repos.`, 'success');
+                             return data.map(repo => ({ name: repo.name, description: repo.description || "No description.", url: repo.html_url, stars: repo.stargazers_count, language: repo.language || "N/A" }));
+                         } catch (error) {
+                             console.error("GitHub Fetch Error:", error);
+                             const errorMsg = (error instanceof TypeError) ? "Network error or CORS issue." : "Fetch exception.";
+                             return new Error(errorMsg);
                          }
-                     }
-                     if (githubUsername) {
-                         portfolioData.githubUsername = githubUsername;
-                         const fetchResult = await fetchGitHubProjects(githubUsername);
-                         portfolioData.fetchedProjects = fetchResult;
-                         if (fetchResult instanceof Error) {
-                             appendOutput(`Error fetching projects: ${fetchResult.message}`, "error");
+                    };
+
+                    // --- Input Event Handlers ---
+                    const handleEnter = () => processCurrentCommand();
+                    const handleArrowUp = () => { // History up
+                        if (commandHistory.length === 0) return;
+                        historyIndex.value = Math.max(0, historyIndex.value - 1);
+                        currentCommand.value = commandHistory[historyIndex.value] ?? "";
+                        nextTick(() => commandInput.value?.setSelectionRange(currentCommand.value.length, currentCommand.value.length));
+                     };
+                    const handleArrowDown = () => { // History down
+                        if (commandHistory.length === 0 || historyIndex.value >= commandHistory.length - 1) {
+                            historyIndex.value = commandHistory.length; // Go past end to clear
+                            currentCommand.value = "";
+                            return;
+                        }
+                        historyIndex.value++;
+                        currentCommand.value = commandHistory[historyIndex.value] ?? "";
+                        nextTick(() => commandInput.value?.setSelectionRange(currentCommand.value.length, currentCommand.value.length));
+                     };
+                    const handleTab = () => { // Autocompletion
+                         const inputVal = currentCommand.value.trim().toLowerCase().split(" ")[0];
+                         if (!inputVal) return;
+                         const possibilities = Object.keys(commands).filter(cmd => cmd.startsWith(inputVal));
+                         if (possibilities.length === 1) { currentCommand.value = possibilities[0] + " "; }
+                         else if (possibilities.length > 1) {
+                             appendOutput(`${getPromptHtml()} <span class="text-command">${currentCommand.value}</span>`, "command-echo");
+                             appendOutput(possibilities.join("    "), "info");
                          }
-                     } else {
-                         appendOutput("GitHub username not configured. 'projects' command unavailable.", "warning");
-                         portfolioData.fetchedProjects = new Error("GitHub username not configured.");
-                     }
+                     };
 
-                     // 3. Final Welcome
-                     appendOutput(`Type 'help' for commands.`, "success");
+                    // --- Component Lifecycle Hook (Initialization) ---
+                    onMounted(async () => {
+                        console.log("Initializing Vue Terminal...");
+                        commands.banner(); // Run Neofetch banner on load
 
-                     // 4. Setup Interaction
-                     setupEventListeners();
+                        // Fetch GitHub Data
+                        let ghUser = null;
+                        if (portfolioData.social?.github) {
+                            try {
+                                const url = new URL(portfolioData.social.github);
+                                ghUser = url.pathname.split('/').filter(Boolean).pop();
+                                if(!ghUser) throw new Error("Cannot extract user");
+                            } catch(e) { appendOutput(`Warning: Invalid GitHub URL`, "warning"); }
+                        }
 
-                     // 5. Focus Input
-                     focusInput();
+                        if (ghUser) {
+                             githubUsername.value = ghUser; // Store detected username
+                             fetchedProjects.value = await fetchGitHubProjects(ghUser);
+                             if (fetchedProjects.value instanceof Error) { // Append error msg if fetch failed
+                                appendOutput(`Error fetching projects: ${fetchedProjects.value.message}`, "error");
+                             }
+                        } else {
+                            appendOutput("GitHub user not configured. 'projects' unavailable.", "warning");
+                            fetchedProjects.value = new Error("GitHub user not configured.");
+                        }
 
-                     // 6. Final Scroll
-                     scrollToBottom();
-                     console.log("Terminal Initialized Successfully.");
+                        appendOutput(`Type 'help' for commands.`, "success"); // Final message
+                        focusInput();
+                        scrollToBottom();
+                        console.log("Terminal Initialized.");
+                    });
 
-                } catch (initError) {
-                    console.error("FATAL ERROR during initialization:", initError);
-                    appendOutput("############################################", "error");
-                    appendOutput("FATAL ERROR during initialization.", "error");
-                    appendOutput(`Message: ${initError.message}`, "error");
-                    appendOutput("Check browser console (F12).", "error");
-                    appendOutput("############################################", "error");
-                    alert(`Fatal Error initializing terminal: ${initError.message}. Check console.`);
+                    // --- Expose to Template ---
+                    return {
+                        outputLines, currentCommand, promptUser, promptHost,
+                        currentPath, promptChar, terminal, commandInput,
+                        focusInput, handleEnter, handleArrowUp, handleArrowDown,
+                        handleTab, clearOutput
+                    };
                 }
-            }
-
-            // --- START EXECUTION ---
-            document.addEventListener("DOMContentLoaded", initializeTerminal);
+            }).mount('#app');
 
         </script>
     </body>

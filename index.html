@@ -11,9 +11,6 @@
         <!-- Vue.js 3 CDN -->
         <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 
-        <!-- jQuery CDN REMOVED - Not actively used, optimizing dependencies -->
-        <!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->
-
         <!-- Google Fonts (Fira Code) -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +19,11 @@
         <style>
             /* Define custom CSS variables for theme colors */
             :root {
-                --color-background: #1a1b26; /* Tokyo Night background */
+                /* Tokyo Night background (Original Hex) */
+                --color-background-hex: #1a1b26;
+                 /* Tokyo Night background (RGB components for rgba) */
+                --color-background-rgb: 26, 27, 38;
+
                 --color-text: #c0caf5;       /* Default text */
                 --color-black: #15161e;      /* Darker black */
                 --color-red: #f7768e;        /* Red */
@@ -37,10 +38,54 @@
 
             body {
                 font-family: "Fira Code", "Courier New", Courier, monospace;
-                background-color: var(--color-background);
+                /* Background is now handled by the canvas */
+                background-color: transparent; /* Keep body transparent */
                 color: var(--color-text);
                 line-height: 1.5; /* Improved spacing */
+                margin: 0;
+                overflow: hidden; /* Hide scrollbars */
             }
+
+            /* Position the canvas behind the terminal */
+            #matrixCanvas {
+                position: fixed; /* Fix to viewport */
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: -1; /* Put it behind everything else */
+                display: block; /* Remove extra space below canvas */
+                pointer-events: none; /* Allow clicks to pass through to elements above */
+                background-color: black; /* Fallback/base for canvas */
+            }
+
+             /* Style the terminal container */
+             #app {
+                 position: relative; /* Needed for z-index to work correctly */
+                 z-index: 0; /* Ensure it's above the canvas */
+                 /* Initial background is transparent by default via CSS */
+                 background-color: rgba(var(--color-background-rgb), 0.9); /* Semi-transparent background via CSS Variable */
+                 /* Add transition for smoother opacity change */
+                 transition: background-color 0.5s ease;
+                 /* Prevent text selection to feel more like a terminal */
+                 user-select: none;
+                 -webkit-user-select: none; /* Safari */
+                 -ms-user-select: none; /* IE 10+ */
+                 box-sizing: border-box; /* Include padding in dimensions */
+             }
+             /* Allow selection within specific elements like input */
+             #app input {
+                user-select: text;
+                -webkit-user-select: text; /* Safari */
+                -ms-user-select: text; /* IE 10+ */
+             }
+             /* Allow selection on links */
+             #app a {
+                 user-select: text;
+                 -webkit-user-select: text;
+                 -ms-user-select: text;
+             }
+
 
             /* Custom Scrollbar (Tailwind doesn't handle easily) */
             ::-webkit-scrollbar { width: 10px; }
@@ -76,6 +121,7 @@
                 display: inline-block;
                 margin-right: 0.5rem;
             }
+
         </style>
         <script>
             // Configure Tailwind to understand our theme colors via CSS variables
@@ -83,7 +129,8 @@
                 theme: { extend: {
                         colors: {
                             // Map names to the CSS variables for Tailwind utility classes
-                            background: 'var(--color-background)', text: 'var(--color-text)',
+                            // Use the non-transparent background variable for utility classes
+                            background: 'var(--color-background-hex)', text: 'var(--color-text)',
                             black: 'var(--color-black)', red: 'var(--color-red)',
                             green: 'var(--color-green)', yellow: 'var(--color-yellow)',
                             blue: 'var(--color-blue)', magenta: 'var(--color-magenta)',
@@ -100,7 +147,9 @@
                     } } }
         </script>
     </head>
-    <body class="bg-background text-text font-mono text-[15px] leading-normal antialiased">
+    <body class="font-mono text-[15px] leading-normal antialiased">
+         <!-- Canvas for drawing the matrix effect -->
+        <canvas id="matrixCanvas"></canvas>
 
         <div id="app" class="h-screen flex flex-col" @click="focusInput">
 
@@ -132,8 +181,8 @@
 
                     <!-- Regular Command Echo -->
                     <span v-else-if="line.type === 'command-echo'" class="opacity-90" v-html="line.html"></span>
-                     <!-- Other Output types -->
-                    <span v-else :class="['output-text', line.type ? 'output-' + line.type : '']" v-html="line.html"></span>
+                     <!-- Other Output types (using displayedHtml for typing effect) -->
+                    <span v-else :class="['output-text', line.type ? 'output-' + line.type : '']" v-html="line.displayedHtml"></span>
                  </div>
             </div>
 
@@ -158,6 +207,171 @@
         </div>
 
         <script>
+            // --- CMatrix Canvas Logic ---
+            // Runs immediately after the canvas and #app elements are available.
+
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+             const appElement = document.getElementById('app'); // Get the app element
+
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            // Japanese Katakana characters + numbers and symbols
+            const matrixChars = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789XYZ@#$%^&*()_+=-';
+            const characters = matrixChars.split('');
+
+            const fontSize = 16; // px
+            let columns = Math.floor(width / fontSize);
+
+            const drops = [];
+
+            // Initialize drops
+            for (let x = 0; x < columns; x++) {
+                // Initialize drops with a random starting position, potentially below the screen
+                drops[x] = Math.floor(Math.random() * (height / fontSize)); // Start at a row within screen height
+                 // Optionally: drops[x] = Math.floor(Math.random() * (height / fontSize + 20)); // Start potentially below screen
+            }
+
+            let animationFrameId = null;
+            let isMatrixEnabled = true; // State variable
+
+            // Get the opaque background color from CSS variable
+             let opaqueBgColor = '';
+             let hasFetchedOpaqueColor = false;
+
+             function fetchOpaqueBackgroundColor() {
+                 if (hasFetchedOpaqueColor) return; // Only fetch once
+                 const rootStyles = getComputedStyle(document.documentElement);
+                 opaqueBgColor = rootStyles.getPropertyValue('--color-background-hex').trim();
+                 hasFetchedOpaqueColor = true;
+                 console.log('Fetched opaque background color:', opaqueBgColor);
+             }
+
+
+            // Drawing function
+            function drawMatrix() {
+                // Semi-transparent black rectangle for trail
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, width, height);
+
+                // Character color and font
+                ctx.fillStyle = '#0F0'; // Green
+                ctx.font = fontSize + 'px monospace';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = characters[Math.floor(Math.random() * characters.length)];
+                    const y = drops[i] * fontSize;
+                    ctx.fillText(text, i * fontSize, y);
+
+                    // Send the drop back to the top if it's below the screen or randomly
+                    // Increased random y offset slightly for variety
+                    if (y > height + 20 && Math.random() > 0.975) {
+                        drops[i] = 0; // Reset to the top
+                    } else {
+                        drops[i]++; // Move down
+                    }
+                }
+
+                if (isMatrixEnabled) {
+                   animationFrameId = requestAnimationFrame(drawMatrix);
+                } else {
+                   animationFrameId = null; // Ensure ID is null when stopped
+                }
+            }
+
+            // Function to start the matrix animation
+            function startMatrix() {
+                if (!isMatrixEnabled) {
+                    isMatrixEnabled = true;
+                    // Clear any lingering frame ID just in case
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+                    // Set app background back to the transparent version defined in CSS
+                    // By removing the inline style set by stopMatrix
+                    if (appElement) {
+                        appElement.style.backgroundColor = ''; // Remove inline style to use CSS rule
+                    }
+
+                    // Start the animation loop
+                    animationFrameId = requestAnimationFrame(drawMatrix);
+                    console.log('Matrix effect enabled.');
+                }
+                 // If already enabled, do nothing
+            }
+
+            // Function to stop the matrix animation
+            function stopMatrix() {
+                 fetchOpaqueBackgroundColor(); // Ensure opaque color is fetched
+
+                if (isMatrixEnabled) {
+                    isMatrixEnabled = false;
+                     if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                     }
+
+                     // Change app background to opaque version using the fetched variable value
+                     if (appElement && opaqueBgColor) {
+                        appElement.style.backgroundColor = opaqueBgColor;
+                     } else if (appElement) {
+                          // Fallback if variable failed to fetch
+                         appElement.style.backgroundColor = '#1a1b26'; // Hardcoded fallback
+                     }
+
+                     // Optional: Clear the canvas completely when stopped
+                     // ctx.clearRect(0, 0, width, height); // Use if you want blank background when stopped
+
+                    console.log('Matrix effect disabled.');
+                }
+                 // If already disabled, do nothing
+            }
+
+            // Make control functions and state accessible globally for the Vue app
+            window.startMatrixEffect = startMatrix;
+            window.stopMatrixEffect = stopMatrix;
+            window.isMatrixEffectEnabled = () => isMatrixEnabled; // Provide a getter
+
+
+            // Handle window resizing
+            window.addEventListener('resize', () => {
+                // Update canvas dimensions first
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+
+                // Recalculate columns and adjust drops array
+                const newColumns = Math.floor(width / fontSize);
+                if (newColumns !== columns) {
+                    columns = newColumns;
+                    drops.length = columns; // Adjust size
+                    // Initialize any new columns that might have been added
+                    for (let x = 0; x < columns; x++) {
+                        if (drops[x] === undefined) {
+                            drops[x] = Math.random() * height / fontSize; // Initialize new columns
+                        }
+                    }
+                }
+                // If matrix is enabled, the next frame from requestAnimationFrame
+                // will automatically draw on the new size. If disabled, nothing happens.
+                // Force a redraw frame on resize *only* if matrix is currently enabled AND no frame is scheduled
+                // (e.g. if animation was paused somehow during resize) - defensive check
+                 if (isMatrixEnabled && animationFrameId === null) {
+                      animationFrameId = requestAnimationFrame(drawMatrix);
+                 }
+            });
+
+            // Start the animation initially when the DOM is ready.
+            // The transparent background is handled by CSS.
+            document.addEventListener('DOMContentLoaded', () => {
+                 fetchOpaqueBackgroundColor(); // Fetch opaque color for later use
+                 startMatrix(); // Start the animation
+            });
+
+
+        </script>
+
+        <script>
+            // --- Vue Terminal Logic ---
             const { createApp, ref, reactive, nextTick, onMounted } = Vue;
             const initialLoadTime = Date.now();
 
@@ -170,6 +384,7 @@
                     const historyIndex = ref(-1);
                     const fetchedProjects = ref(null);
                     const githubUsername = ref(null);
+                    const typewriterSpeed = ref(15); // Milliseconds per character (slightly faster)
 
                     // --- Constants & Config ---
                     const promptUser = "user";
@@ -185,12 +400,14 @@
                             linkedin: "https://www.linkedin.com/in/axo-gm-9758832b0/",
                             website: "http://axogmweb.unaux.com"
                         },
-                        about: [ /* Shortened for brevity */
-                            "Interactive terminal portfolio.",
-                            "Use 'help' for commands.",
+                         about: [
+                            "Hello! I'm AxoGM. This is my interactive terminal portfolio.",
+                            "I enjoy building things, learning new technologies, and solving problems.",
+                            "Currently focused on web development and exploring software design patterns.",
+                            "Use the commands below to learn more about me and my work:",
+                            "help, about, projects, contact, social, skills, banner, clear, date, echo, pwd, ls, uname, whoami, matrix, sudo", // Added sudo to help
                         ],
-                         skills: [ "JavaScript", "Python", "HTML/CSS", "Vue.js", "Node.js", "Git"],
-                         // No banner text needed now
+                         skills: [ "JavaScript", "Python", "HTML/CSS", "Vue.js", "Node.js", "Git", "SQL", "Bash", "Tailwind CSS", "Firebase"],
                     });
 
                     // --- Template Refs ---
@@ -199,45 +416,132 @@
 
                     // --- Core Methods ---
                     const focusInput = () => commandInput.value?.focus();
-                    const scrollToBottom = () => { // Scrolls if near bottom
+
+                    // Modified scrollToBottom to be simpler, closer to terminal
+                    const scrollToBottom = () => {
                          nextTick(() => {
-                           const el = terminal.value;
-                           if (el) {
-                                const buffer = 60; // Px buffer
-                                const isScrolledToBottom = el.scrollHeight - el.clientHeight <= el.scrollTop + buffer;
-                                if (isScrolledToBottom || el.scrollHeight <= el.clientHeight) {
-                                    el.scrollTop = el.scrollHeight;
-                                }
+                            const el = terminal.value;
+                            if (el) {
+                                el.scrollTop = el.scrollHeight;
                             }
                         });
                     };
 
-                    const appendOutput = (content, type = "text") => { // Handles different output types
+                    // Basic HTML Sanitization helper
+                    const sanitizeHtml = (str) => {
+                         if (typeof str !== 'string') return String(str);
+                         // Replace basic HTML characters with entities
+                         return str.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                    };
+
+                     // Re-allow specific HTML after basic sanitization
+                    const processAllowedHtml = (sanitizedStr) => {
+                         let processed = sanitizedStr;
+                         // This is a simplified approach. Be very careful with what you allow.
+                         // Revert specific entities back to tags/attributes only for known patterns
+                         processed = processed.replace(/<a href="([^"]*)" target="([^"]*)" class="([^"]*)">([^&]*)<\/a>/g, '<a href="$1" target="$2" class="$3">$4</a>');
+                         processed = processed.replace(/<span class="([^"]*)">([^&]*)<\/span>/g, '<span class="$1">$2</span>');
+                         // Add more if needed: processed = processed.replace(/<strong>([^&]*)<\/strong>/g, '<strong>$1</strong>');
+                         return processed;
+                    };
+
+
+                    // Appends instant output (like command echo or errors)
+                    const appendOutput = (content, type = "text") => {
                         const newId = Date.now() + Math.random();
                         if (type === 'neofetch') {
                             if (typeof content !== 'object' || !content.imgPath) {
                                 console.error("Invalid data provided for neofetch type:", content);
-                                outputLines.value.push({ id: newId, type: 'error', html: "Error: Invalid banner data."});
+                                outputLines.value.push({ id: newId, type: 'error', html: sanitizeHtml("Error: Invalid banner data.")});
                             } else {
+                                // Neofetch data is already structured, pass it directly
                                 outputLines.value.push({ id: newId, type: 'neofetch', data: content });
                             }
-                        } else {
-                            outputLines.value.push({ id: newId, type, html: String(content) });
+                        } else if (type === 'command-echo') {
+                            // Command echo is pre-formatted HTML, don't sanitize here, assume it's safe from getPromptHtml
+                            // BUT sanitize the command text itself within the span
+                             outputLines.value.push({ id: newId, type, html: content }); // content includes the prompt + span already
                         }
+                        else {
+                             // For other types, sanitize and process allowed HTML instantly
+                            outputLines.value.push({ id: newId, type, displayedHtml: processAllowedHtml(sanitizeHtml(content)), fullHtml: processAllowedHtml(sanitizeHtml(content)) }); // Store full html for consistency
+                        }
+                         // Scroll instantly for non-typing output
                         scrollToBottom();
                     };
 
-                    const getPromptHtml = () => { // Generates prompt HTML for echo
-                        return `<span class="prompt mr-2 whitespace-nowrap"><span class="prompt-user font-bold">${promptUser}</span><span class="text-text">@</span><span class="prompt-host">${promptHost}</span><span class="text-text">:</span><span class="prompt-path">${currentPath.value}</span><span class="prompt-char font-bold ml-px">${promptChar}</span></span>`;
+                    // Appends output with a typing animation
+                    const appendTypingOutput = (content, type = "text", speed = typewriterSpeed.value) => {
+                         const newId = Date.now() + Math.random();
+                         const sanitizedContent = sanitizeHtml(content);
+                         const fullHtmlContent = processAllowedHtml(sanitizedContent); // Process allowed HTML tags *before* typing
+                         // Create plain text version for typing by stripping allowed HTML tags
+                         const plainTextContent = sanitizedContent
+                                                 .replace(/<a[^&]*>([^&]*)<\/a>/g, '$1')
+                                                 .replace(/<span[^&]*>([^&]*)<\/span>/g, '$1')
+                                                  // Optionally decode basic entities like & etc. if you want them typed correctly
+                                                 .replace(/&/g, '&')
+                                                 .replace(/</g, '<')
+                                                 .replace(/>/g, '>');
+
+
+                        const line = reactive({ // Use reactive for this object to easily update properties
+                            id: newId,
+                            type,
+                            fullHtml: fullHtmlContent,
+                            displayedHtml: '', // Start empty
+                            isTyping: true,
+                            typingInterval: null,
+                            charIndex: 0,
+                            plainText: plainTextContent
+                        });
+
+                         outputLines.value.push(line); // Add the line placeholder
+
+                         nextTick(() => {
+                            scrollToBottom(); // Scroll immediately to show the new line placeholder
+
+                            line.typingInterval = setInterval(() => {
+                                 if (line.charIndex < line.plainText.length) {
+                                    line.displayedHtml += line.plainText[line.charIndex];
+                                    line.charIndex++;
+                                    // Scroll during typing, but not excessively
+                                    if (line.charIndex % 5 === 0 || line.charIndex === line.plainText.length -1) {
+                                        scrollToBottom();
+                                    }
+
+                                 } else {
+                                     // Typing finished, replace displayed with full HTML
+                                    clearInterval(line.typingInterval);
+                                    line.typingInterval = null;
+                                    line.displayedHtml = line.fullHtml; // Swap to HTML version
+                                    line.isTyping = false;
+                                    scrollToBottom(); // Final scroll
+                                 }
+                            }, speed);
+                        });
+                    };
+
+                    const getPromptHtml = (commandText = "") => { // Generates prompt HTML for echo, includes the command text
+                        const safeCommandText = sanitizeHtml(commandText); // Sanitize the input command text
+                        return `<span class="prompt mr-2 whitespace-nowrap"><span class="prompt-user font-bold">${promptUser}</span><span class="text-text">@</span><span class="prompt-host">${promptHost}</span><span class="text-text">:</span><span class="prompt-path">${currentPath.value}</span><span class="prompt-char font-bold ml-px">${promptChar}</span></span><span class="text-command">${safeCommandText}</span>`;
                      };
 
                      const runCommand = (commandName, args) => { // Executes command logic
                           if (commands[commandName]) {
-                             try { commands[commandName](args); } catch (error) {
+                             try {
+                                 // Commands now ideally return their output, which we then append
+                                 // Or, some commands might still call appendOutput/appendTypingOutput directly
+                                 commands[commandName](args); // Execute the command
+                             } catch (error) {
                                 console.error(`Cmd Err [${commandName}]:`, error);
-                                appendOutput(`Runtime error: ${error.message}`, "error");
+                                 // Errors should append instantly
+                                appendOutput(`Runtime error: ${sanitizeHtml(error.message)}`, "error");
                              }
-                         } else { appendOutput(`command not found: ${commandName}`, "error"); }
+                         } else {
+                             // Command not found message should append instantly
+                             appendOutput(`command not found: ${sanitizeHtml(commandName)}`, "error");
+                         }
                      };
 
                      const processCurrentCommand = () => { // Handles 'Enter' key press
@@ -249,12 +553,14 @@
                          }
                          historyIndex.value = commandHistory.length; // Reset history index
 
-                         appendOutput(`${getPromptHtml()} <span class="text-command">${currentCommand.value}</span>`, "command-echo");
+                         // Echo command line instantly, includes the command text itself
+                         appendOutput(getPromptHtml(currentCommand.value), "command-echo");
+
                          const parts = commandStr.split(" ");
                          runCommand(parts[0].toLowerCase(), parts.slice(1));
 
                          currentCommand.value = ""; // Clear input
-                         scrollToBottom();
+                         // Scrolling handled by append/appendTyping
                     };
                     const clearOutput = () => { outputLines.value = []; };
 
@@ -263,134 +569,202 @@
                         const seconds = Math.floor(uptimeMs / 1000) % 60;
                         const minutes = Math.floor(uptimeMs / (1000 * 60)) % 60;
                         const hours = Math.floor(uptimeMs / (1000 * 60 * 60));
-                        let str = `${seconds}s`;
-                        if (minutes > 0 || hours > 0) str = `${minutes}m ` + str;
-                        if (hours > 0) str = `${hours}h ` + str;
-                        return str;
+                        let str = "";
+                        if (hours > 0) str += `${hours}h `;
+                        if (minutes > 0 || hours > 0) str += `${minutes}m `;
+                         str += `${seconds}s`;
+                         return str.trim();
                     };
 
                     // --- Command Definitions ---
+                    // Modify commands to call appendTypingOutput or appendOutput as appropriate
                      const commands = {
-                         help: () => { /* Unchanged */
+                         help: () => {
                             const available = Object.keys(commands).sort().join("  ");
-                            appendOutput("Available commands:", "info"); appendOutput(available, "text");
-                            appendOutput(`\nUp/Down for history, Tab complete, Ctrl+L clear.`, "dim");
+                            appendTypingOutput("Available commands:", "info");
+                            appendTypingOutput(available, "text");
+                            appendTypingOutput(`\nUp/Down for history, Tab complete, Ctrl+L clear.`, "dim");
                          },
-                         about: () => { /* Unchanged */
-                            appendOutput(`--- About ${portfolioData.name} ---`, "info");
-                            if (portfolioData.title) appendOutput(`${portfolioData.title}`, "cyan");
-                            portfolioData.about.forEach(line => appendOutput(`> ${line}`));
+                         about: () => {
+                            appendTypingOutput(`--- About ${portfolioData.name} ---`, "info");
+                            if (portfolioData.title) appendTypingOutput(`${portfolioData.title}`, "cyan");
+                            portfolioData.about.forEach(line => appendTypingOutput(`> ${line}`));
                          },
-                         banner: () => { // Constructs and outputs Neofetch data
-                             // Simulate simple OS detection (very basic)
+                         banner: () => { // Constructs and outputs Neofetch data (instant)
                              let os = "WebApp";
                              const ua = navigator.userAgent;
-                             if (ua.includes("Win")) os = "Windows";
-                             else if (ua.includes("Mac")) os = "MacOS";
-                             else if (ua.includes("Linux")) os = "Linux";
-                             else if (ua.includes("Android")) os = "Android";
-                             else if (ua.includes("like Mac")) os = "iOS"; // Basic iOS detection
+                             if (ua.includes("Win")) os = "Windows"; else if (ua.includes("Mac")) os = "MacOS"; else if (ua.includes("Linux")) os = "Linux"; else if (ua.includes("Android")) os = "Android"; else if (ua.includes("like Mac")) os = "iOS";
 
                              const neofetchData = {
                                 imgPath: './icon.png', // Ensure this exists!
                                 user: promptUser, host: promptHost,
                                 info: [
-                                     { key: "OS", value: os }, // Simulated OS
-                                    { key: "Portfolio", value: portfolioData.name },
-                                     { key: "Status", value: portfolioData.title },
-                                     // Using v-html for these values with links
-                                    { key: "Contact", value: `<a href="mailto:${portfolioData.contact.email}" class="text-link underline hover:no-underline">${portfolioData.contact.email}</a>` },
-                                    { key: "GitHub", value: `<a href="${portfolioData.social.github}" target="_blank" class="text-link underline hover:no-underline">${portfolioData.social.github}</a>` },
-                                     { key: "LinkedIn", value: `<a href="${portfolioData.social.linkedin}" target="_blank" class="text-link underline hover:no-underline">Visit Profile</a>` },
-                                     { key: "Skills", value: (portfolioData.skills || []).slice(0, 6).join(', ') + (portfolioData.skills.length > 6 ? '...' : '') },
+                                     { key: "OS", value: sanitizeHtml(os) },
+                                    { key: "Portfolio", value: sanitizeHtml(portfolioData.name) },
+                                     { key: "Status", value: sanitizeHtml(portfolioData.title) },
+                                    { key: "Contact", value: `<a href="mailto:${sanitizeHtml(portfolioData.contact.email)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.contact.email)}</a>` }, // Added target="_blank"
+                                    { key: "GitHub", value: `<a href="${sanitizeHtml(portfolioData.social.github)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.social.github)}</a>` },
+                                     { key: "LinkedIn", value: `<a href="${sanitizeHtml(portfolioData.social.linkedin)}" target="_blank" class="text-link underline hover:no-underline">Visit Profile</a>` },
+                                     { key: "Skills", value: sanitizeHtml((portfolioData.skills || []).slice(0, 8).join(', ') + (portfolioData.skills.length > 8 ? '...' : '')) }, // Show more skills
                                      { key: "Shell", value: "VueTerm" },
                                     { key: "Uptime", value: getUptime() },
-                                     { key: "Theme", value: "TokyoNight-ish" } // Fun detail
+                                     { key: "Theme", value: "TokyoNight-ish" }
                                  ]
                              };
+                              // Banner is complex structure, append instantly
                              appendOutput(neofetchData, 'neofetch');
                          },
-                         projects: () => { // Renders fetched GitHub projects
-                             appendOutput("--- GitHub Projects ---", "info");
+                         projects: () => { // Renders fetched GitHub projects (typing)
+                             appendTypingOutput("--- GitHub Projects ---", "info");
                              const projects = fetchedProjects.value;
-                             if (projects instanceof Error) appendOutput(`Error: ${projects.message}`, "error");
-                             else if (projects === null) appendOutput("Loading projects or fetch failed...", "warning");
-                             else if (!Array.isArray(projects)) appendOutput("Project data format error.", "error");
-                             else if (projects.length === 0) appendOutput(`No public repositories found.`, "warning");
+                             if (projects instanceof Error) appendTypingOutput(`Error: ${sanitizeHtml(projects.message)}`, "error");
+                             else if (projects === null) appendTypingOutput("Loading projects or fetch failed...", "warning");
+                             else if (!Array.isArray(projects)) appendTypingOutput("Project data format error.", "error");
+                             else if (projects.length === 0) appendTypingOutput(`No public repositories found for ${githubUsername.value || 'user'}.`, "warning");
                              else {
-                                 projects.forEach(p => { /* ... Existing project formatting logic ... */
-                                    let langClass = 'dim'; /* ... */
+                                 projects.forEach(p => {
+                                    let langClass = 'dim';
                                     if (p.language) { const langLower = p.language.toLowerCase(); if (langLower === 'javascript') langClass = 'yellow'; else if (langLower === 'python') langClass = 'blue'; else if (langLower === 'html') langClass = 'red'; else if (langLower === 'css') langClass = 'magenta'; else if (langLower === 'typescript') langClass = 'blue'; else if (langLower === 'shell') langClass = 'green'; }
-                                    let lineHtml = ` <span class="output-success">•</span> <span class="output-file">${p.name}</span> <span class="output-${langClass}">[${p.language}]</span> <span class="output-yellow">(★ ${p.stars})</span>: ${p.description}`;
-                                    if (p.url) lineHtml += ` (<a href="${p.url}" target="_blank" class="text-link underline hover:no-underline">Link</a>)`; // Shorter link text
-                                    appendOutput(lineHtml);
+                                     // Sanitize project details individually before combining
+                                     const safeName = sanitizeHtml(p.name);
+                                     const safeLang = sanitizeHtml(p.language || "N/A");
+                                     const safeDesc = sanitizeHtml(p.description || "No description.");
+                                     const safeUrl = sanitizeHtml(p.url);
+
+                                    let lineHtml = ` <span class="output-success">•</span> <span class="output-file">${safeName}</span> <span class="output-${langClass}">[${safeLang}]</span> <span class="output-yellow">(★ ${p.stars})</span>: ${safeDesc}`;
+                                     // Ensure links open in a new tab
+                                    if (p.url) lineHtml += ` (<a href="${safeUrl}" target="_blank" class="text-link underline hover:no-underline">Link</a>)`;
+                                    appendTypingOutput(lineHtml); // Use appendTypingOutput
                                  });
-                                 appendOutput(`\n(Showing top ${projects.length} updated public repos)`, "dim");
+                                 appendTypingOutput(`\n(Showing top ${projects.length} updated public repos excluding forks)`, "dim");
                              }
                          },
-                        contact: () => { /* Unchanged */
-                             appendOutput("--- Contact ---", "info");
-                             if (portfolioData.contact.email) appendOutput(`Email: <a href="mailto:${portfolioData.contact.email}" class="text-link underline hover:no-underline">${portfolioData.contact.email}</a>`);
-                             else appendOutput("No email provided.", "warning");
+                        contact: () => {
+                             appendTypingOutput("--- Contact ---", "info");
+                             if (portfolioData.contact.email) appendTypingOutput(`Email: <a href="mailto:${sanitizeHtml(portfolioData.contact.email)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.contact.email)}</a>`);
+                             else appendTypingOutput("No email provided.", "warning");
                          },
-                        social: () => { /* Unchanged */
-                             appendOutput("--- Social Links ---", "info");
+                        social: () => {
+                             appendTypingOutput("--- Social Links ---", "info");
                              const entries = Object.entries(portfolioData.social);
-                             if (entries.length === 0) appendOutput("None provided.", "warning");
+                             if (entries.length === 0) appendTypingOutput("None provided.", "warning");
                              else entries.forEach(([p, url]) => {
-                                 if (url) appendOutput(`<span class="output-cyan">${p.charAt(0).toUpperCase() + p.slice(1)}:</span> <a href="${url}" target="_blank" class="text-link underline hover:no-underline">${url}</a>`);
+                                 const safeUrl = sanitizeHtml(url);
+                                 if (url) appendTypingOutput(`<span class="output-cyan">${sanitizeHtml(p.charAt(0).toUpperCase() + p.slice(1))}:</span> <a href="${safeUrl}" target="_blank" class="text-link underline hover:no-underline">${safeUrl}</a>`);
                              });
                          },
-                         skills: () => { /* Unchanged */
-                            appendOutput("--- Skills ---", "info");
-                            if (!portfolioData.skills?.length) appendOutput("None listed.", "warning");
+                         skills: () => {
+                            appendTypingOutput("--- Skills ---", "info");
+                            if (!portfolioData.skills?.length) appendTypingOutput("None listed.", "warning");
                             else {
-                               const skillsHtml = portfolioData.skills.map((skill, i) => { const cls = i % 3 === 0 ? 'cyan' : (i % 3 === 1 ? 'yellow' : 'magenta'); return `<span class="output-${cls}">${skill}</span>`; }).join('<span class="output-dim"> | </span>');
-                               appendOutput(skillsHtml);
+                               // Sanitize skills before joining
+                               const skillsHtml = portfolioData.skills.map((skill, i) => { const cls = i % 3 === 0 ? 'cyan' : (i % 3 === 1 ? 'yellow' : 'magenta'); return `<span class="output-${cls}">${sanitizeHtml(skill)}</span>`; }).join('<span class="output-dim"> | </span>');
+                               appendTypingOutput(skillsHtml);
                             }
                          },
-                         clear: clearOutput,
-                         date: () => { appendOutput(new Date().toLocaleString(), 'success'); },
-                         echo: (args) => { appendOutput(args.join(" ")); },
-                         pwd: () => { appendOutput(`/home/${promptUser}`, 'info'); },
-                         ls: () => { /* Unchanged */
-                            appendOutput("<span class='directory'>drwxr-xr-x</span> about", 'text'); appendOutput("<span class='directory'>drwxr-xr-x</span> projects", 'text'); appendOutput("<span class='file'>-rw-r--r--</span> contact", 'text'); appendOutput("<span class='file'>-rw-r--r--</span> social", 'text'); appendOutput("\nUse commands to view.", "dim");
+                         clear: clearOutput, // Instant
+                         date: () => { appendTypingOutput(new Date().toLocaleString(), 'success'); },
+                         echo: (args) => { appendTypingOutput(sanitizeHtml(args.join(" "))); },
+                         pwd: () => { appendTypingOutput(`/home/${promptUser}`, 'info'); },
+                         ls: () => { // Typing, but uses instant appendOutput for colored directories/files
+                            // Re-implement ls to use typing effect on full line
+                            appendTypingOutput(`<span class='output-directory'>drwxr-xr-x</span> about`, 'text');
+                            appendTypingOutput(`<span class='output-directory'>drwxr-xr-x</span> projects`, 'text');
+                            appendTypingOutput(`<span class='output-file'>-rw-r--r--</span> contact`, 'text');
+                            appendTypingOutput(`<span class='output-file'>-rw-r--r--</span> social`, 'text');
+                             appendTypingOutput("\nUse commands to view.", "dim");
                          },
-                         uname: () => { appendOutput(`VueTerm v2.2 (Vue3/JS)`, 'info'); },
-                         whoami: () => { appendOutput(promptUser, 'magenta'); },
-                         sudo: () => { appendOutput(`Permission denied. This terminal is secure!`, "error"); },
+                         uname: () => { appendTypingOutput(`VueTerm v2.5 (Vue3/JS)`, 'info'); }, // Updated version
+                         whoami: () => { appendTypingOutput(promptUser, 'magenta'); },
+                         sudo: (args) => {
+                             const command = args.join(" ");
+                             if (command.toLowerCase() === "pleasesudome") { // Example: a "secret" command
+                                 appendTypingOutput("Okay, fine. Running command with elevated... just kidding!", "warning");
+                                 // Could potentially run a *safe* internal command here, e.g., `commands.help()`
+                             } else {
+                                appendTypingOutput(`Permission denied: you are not in the sudoers file. This incident will be reported.`, "error");
+                             }
+                         },
+                         // Command to toggle the matrix effect
+                          matrix: (args) => {
+                              // Allow 'on' or 'off' arguments
+                              const arg = args[0]?.toLowerCase();
+
+                              if (arg === 'on') {
+                                   if (window.isMatrixEffectEnabled && window.isMatrixEffectEnabled()) {
+                                       appendOutput("Matrix effect is already enabled.", "warning");
+                                   } else if (window.startMatrixEffect) {
+                                       window.startMatrixEffect(); // Call the global function
+                                       appendOutput("Matrix effect enabled.", "info");
+                                   } else {
+                                       appendOutput("Matrix control functions not available.", "error");
+                                   }
+                              } else if (arg === 'off') {
+                                   if (window.isMatrixEffectEnabled && !window.isMatrixEffectEnabled()) {
+                                        appendOutput("Matrix effect is already disabled.", "warning");
+                                   } else if (window.stopMatrixEffect) {
+                                       window.stopMatrixEffect(); // Call the global function
+                                       appendOutput("Matrix effect disabled. Background set to solid.", "info"); // Added detail
+                                   } else {
+                                       appendOutput("Matrix control functions not available.", "error");
+                                   }
+                              }
+                              else {
+                                  // Toggle behavior if no args or invalid arg
+                                  if (window.isMatrixEffectEnabled && window.isMatrixEffectEnabled()) {
+                                      window.stopMatrixEffect();
+                                      appendOutput("Matrix effect disabled. Background set to solid.", "info"); // Added detail
+                                  } else if (window.startMatrixEffect) {
+                                      window.startMatrixEffect();
+                                      appendOutput("Matrix effect enabled.", "info");
+                                  } else {
+                                      appendOutput("Matrix control functions not available.", "error");
+                                  }
+                              }
+                          },
+                          cmatrix: (args) => { commands.matrix(args); } // Alias
                      };
 
                     // --- GitHub Fetch Logic (using native fetch) ---
                     const fetchGitHubProjects = async (username) => {
                          if (!username) return new Error("GitHub username missing.");
-                         const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=50`;
-                         appendOutput(`Fetching repos for ${username}...`, 'warning');
+                         // Increase per_page limit slightly to get more repos, max is 100 per_page
+                         const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=100`;
+                         appendOutput(`Fetching repos for ${sanitizeHtml(username)}...`, 'warning'); // Instant status
                          try {
-                             const response = await fetch(apiUrl); // Native Fetch API
+                             const response = await fetch(apiUrl);
                              if (!response.ok) return new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
                              const data = await response.json();
                              if (!Array.isArray(data)) return new Error("Unexpected API response format.");
-                             appendOutput(`Fetched ${data.length} public repos.`, 'success');
-                             return data.map(repo => ({ name: repo.name, description: repo.description || "No description.", url: repo.html_url, stars: repo.stargazers_count, language: repo.language || "N/A" }));
+                              // Filter out forks if you only want original projects
+                              const originalRepos = data.filter(repo => !repo.fork);
+                             // Instant confirmation after fetch completes
+                             appendOutput(`Fetched ${originalRepos.length} public repos (excluding forks).`, 'success');
+                             return originalRepos.map(repo => ({ name: repo.name, description: repo.description || "No description.", url: repo.html_url, stars: repo.stargazers_count, language: repo.language || "N/A", fork: repo.fork }));
                          } catch (error) {
                              console.error("GitHub Fetch Error:", error);
-                             const errorMsg = (error instanceof TypeError) ? "Network error or CORS issue." : "Fetch exception.";
-                             return new Error(errorMsg);
+                             const errorMsg = (error instanceof TypeError) ? "Network error or CORS issue (check GitHub API status)." : `Fetch exception: ${error.message}`;
+                             // Error message is instant
+                             appendOutput(`Error fetching projects: ${sanitizeHtml(errorMsg)}`, "error");
+                             return new Error(errorMsg); // Still return error object for state
                          }
                     };
 
                     // --- Input Event Handlers ---
                     const handleEnter = () => processCurrentCommand();
-                    const handleArrowUp = () => { // History up
+                    const handleArrowUp = () => {
                         if (commandHistory.length === 0) return;
-                        historyIndex.value = Math.max(0, historyIndex.value - 1);
+                         if (historyIndex.value === commandHistory.length && currentCommand.value !== commandHistory[commandHistory.length - 1]) {
+                             historyIndex.value = commandHistory.length - 1;
+                         } else {
+                             historyIndex.value = Math.max(0, historyIndex.value - 1);
+                         }
                         currentCommand.value = commandHistory[historyIndex.value] ?? "";
                         nextTick(() => commandInput.value?.setSelectionRange(currentCommand.value.length, currentCommand.value.length));
                      };
-                    const handleArrowDown = () => { // History down
+                    const handleArrowDown = () => {
                         if (commandHistory.length === 0 || historyIndex.value >= commandHistory.length - 1) {
-                            historyIndex.value = commandHistory.length; // Go past end to clear
+                            historyIndex.value = commandHistory.length;
                             currentCommand.value = "";
                             return;
                         }
@@ -398,46 +772,62 @@
                         currentCommand.value = commandHistory[historyIndex.value] ?? "";
                         nextTick(() => commandInput.value?.setSelectionRange(currentCommand.value.length, currentCommand.value.length));
                      };
-                    const handleTab = () => { // Autocompletion
-                         const inputVal = currentCommand.value.trim().toLowerCase().split(" ")[0];
+                    const handleTab = () => {
+                         const inputVal = currentCommand.value.trim().toLowerCase();
                          if (!inputVal) return;
-                         const possibilities = Object.keys(commands).filter(cmd => cmd.startsWith(inputVal));
-                         if (possibilities.length === 1) { currentCommand.value = possibilities[0] + " "; }
+
+                        const parts = inputVal.split(" ");
+                        const currentPart = parts.pop(); // Get the last word
+
+                         const possibilities = Object.keys(commands)
+                                             .filter(cmd => cmd.startsWith(currentPart));
+
+                         if (possibilities.length === 1) {
+                             // Replace the last part with the completion + space
+                             parts.push(possibilities[0]);
+                             currentCommand.value = parts.join(" ") + " ";
+                         }
                          else if (possibilities.length > 1) {
-                             appendOutput(`${getPromptHtml()} <span class="text-command">${currentCommand.value}</span>`, "command-echo");
+                             // Echo command and list possibilities instantly
+                             appendOutput(getPromptHtml(currentCommand.value), "command-echo");
+                              // Join possibilities with spaces for display
                              appendOutput(possibilities.join("    "), "info");
                          }
+                          // Keep focus on input after tab
+                         nextTick(() => focusInput());
                      };
 
                     // --- Component Lifecycle Hook (Initialization) ---
                     onMounted(async () => {
                         console.log("Initializing Vue Terminal...");
-                        commands.banner(); // Run Neofetch banner on load
+                        commands.banner(); // Run Neofetch banner on load (instant)
 
-                        // Fetch GitHub Data
+                        // Fetch GitHub Data (status messages are instant, result is typed later by 'projects' command)
                         let ghUser = null;
                         if (portfolioData.social?.github) {
                             try {
                                 const url = new URL(portfolioData.social.github);
                                 ghUser = url.pathname.split('/').filter(Boolean).pop();
                                 if(!ghUser) throw new Error("Cannot extract user");
-                            } catch(e) { appendOutput(`Warning: Invalid GitHub URL`, "warning"); }
+                                console.log(`Detected GitHub user: ${ghUser}`);
+                            } catch(e) {
+                                appendOutput(`Warning: Invalid GitHub URL in portfolioData.social.github`, "warning");
+                                console.warn("Invalid GitHub URL:", portfolioData.social.github, e);
+                             }
                         }
 
                         if (ghUser) {
-                             githubUsername.value = ghUser; // Store detected username
+                             githubUsername.value = ghUser;
                              fetchedProjects.value = await fetchGitHubProjects(ghUser);
-                             if (fetchedProjects.value instanceof Error) { // Append error msg if fetch failed
-                                appendOutput(`Error fetching projects: ${fetchedProjects.value.message}`, "error");
-                             }
+                             // Error message is already appended by fetchGitHubProjects
                         } else {
-                            appendOutput("GitHub user not configured. 'projects' unavailable.", "warning");
-                            fetchedProjects.value = new Error("GitHub user not configured.");
+                            appendOutput("GitHub user not configured in portfolioData. 'projects' unavailable.", "warning");
+                            fetchedProjects.value = new Error("GitHub user not configured."); // Store error state
                         }
 
-                        appendOutput(`Type 'help' for commands.`, "success"); // Final message
+                        appendTypingOutput(`Type 'help' for commands.`, "success"); // Type this message
                         focusInput();
-                        scrollToBottom();
+                        scrollToBottom(); // Ensure focus and initial scroll
                         console.log("Terminal Initialized.");
                     });
 

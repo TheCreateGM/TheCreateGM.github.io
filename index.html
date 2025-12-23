@@ -12,28 +12,31 @@
         <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 
         <!-- Google Fonts (Fira Code) -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap"
+            rel="stylesheet"
+        />
 
         <style>
             /* Define custom CSS variables for theme colors */
             :root {
                 /* Tokyo Night background (Original Hex) */
                 --color-background-hex: #1a1b26;
-                 /* Tokyo Night background (RGB components for rgba) */
+                /* Tokyo Night background (RGB components for rgba) */
                 --color-background-rgb: 26, 27, 38;
 
-                --color-text: #c0caf5;       /* Default text */
-                --color-black: #15161e;      /* Darker black */
-                --color-red: #f7768e;        /* Red */
-                --color-green: #9ece6a;      /* Green */
-                --color-yellow: #e0af68;     /* Yellow */
-                --color-blue: #7aa2f7;       /* Blue */
-                --color-magenta: #bb9af7;    /* Magenta */
-                --color-cyan: #7dcfff;       /* Cyan */
-                --color-white: #a9b1d6;      /* Brighter white/text */
-                --color-dim: #5c6370;        /* Dim color */
+                --color-text: #c0caf5; /* Default text */
+                --color-black: #15161e; /* Darker black */
+                --color-red: #f7768e; /* Red */
+                --color-green: #9ece6a; /* Green */
+                --color-yellow: #e0af68; /* Yellow */
+                --color-blue: #7aa2f7; /* Blue */
+                --color-magenta: #bb9af7; /* Magenta */
+                --color-cyan: #7dcfff; /* Cyan */
+                --color-white: #a9b1d6; /* Brighter white/text */
+                --color-dim: #5c6370; /* Dim color */
             }
 
             body {
@@ -59,60 +62,104 @@
                 background-color: black; /* Fallback/base for canvas */
             }
 
-             /* Style the terminal container */
-             #app {
-                 position: relative; /* Needed for z-index to work correctly */
-                 z-index: 0; /* Ensure it's above the canvas */
-                 /* Initial background is transparent by default via CSS */
-                 background-color: rgba(var(--color-background-rgb), 0.9); /* Semi-transparent background via CSS Variable */
-                 /* Add transition for smoother opacity change */
-                 transition: background-color 0.5s ease;
-                 /* Prevent text selection to feel more like a terminal */
-                 user-select: none;
-                 -webkit-user-select: none; /* Safari */
-                 -ms-user-select: none; /* IE 10+ */
-                 box-sizing: border-box; /* Include padding in dimensions */
-             }
-             /* Allow selection within specific elements like input */
-             #app input {
+            /* Style the terminal container */
+            #app {
+                position: relative; /* Needed for z-index to work correctly */
+                z-index: 0; /* Ensure it's above the canvas */
+                /* Initial background is transparent by default via CSS */
+                background-color: rgba(
+                    var(--color-background-rgb),
+                    0.9
+                ); /* Semi-transparent background via CSS Variable */
+                /* Add transition for smoother opacity change */
+                transition: background-color 0.5s ease;
+                /* Prevent text selection to feel more like a terminal */
+                user-select: none;
+                -webkit-user-select: none; /* Safari */
+                -ms-user-select: none; /* IE 10+ */
+                box-sizing: border-box; /* Include padding in dimensions */
+            }
+            /* Allow selection within specific elements like input */
+            #app input {
                 user-select: text;
                 -webkit-user-select: text; /* Safari */
                 -ms-user-select: text; /* IE 10+ */
-             }
-             /* Allow selection on links */
-             #app a {
-                 user-select: text;
-                 -webkit-user-select: text;
-                 -ms-user-select: text;
-             }
-
+            }
+            /* Allow selection on links */
+            #app a {
+                user-select: text;
+                -webkit-user-select: text;
+                -ms-user-select: text;
+            }
 
             /* Custom Scrollbar (Tailwind doesn't handle easily) */
-            ::-webkit-scrollbar { width: 10px; }
-            ::-webkit-scrollbar-track { background: var(--color-black); }
-            ::-webkit-scrollbar-thumb {
-                background-color: var(--color-green); border-radius: 5px; border: 2px solid var(--color-black);
+            ::-webkit-scrollbar {
+                width: 10px;
             }
-            html { scrollbar-width: thin; scrollbar-color: var(--color-green) var(--color-black); }
+            ::-webkit-scrollbar-track {
+                background: var(--color-black);
+            }
+            ::-webkit-scrollbar-thumb {
+                background-color: var(--color-green);
+                border-radius: 5px;
+                border: 2px solid var(--color-black);
+            }
+            html {
+                scrollbar-width: thin;
+                scrollbar-color: var(--color-green) var(--color-black);
+            }
 
             /* --- Specific element styling using CSS variables --- */
-            .prompt-user { color: var(--color-magenta); }
-            .prompt-host { color: var(--color-cyan); }
-            .prompt-path { color: var(--color-blue); }
-            .prompt-char { color: var(--color-green); }
+            .prompt-user {
+                color: var(--color-magenta);
+            }
+            .prompt-host {
+                color: var(--color-cyan);
+            }
+            .prompt-path {
+                color: var(--color-blue);
+            }
+            .prompt-char {
+                color: var(--color-green);
+            }
 
-            .output-error   { color: var(--color-red); }
-            .output-success { color: var(--color-green); }
-            .output-warning { color: var(--color-yellow); }
-            .output-info    { color: var(--color-blue); }
-            .output-cyan    { color: var(--color-cyan); }
-            .output-blue    { color: var(--color-blue); }
-            .output-magenta { color: var(--color-magenta); }
-            .output-yellow  { color: var(--color-yellow); }
-            .output-red     { color: var(--color-red); }
-            .output-dim     { color: var(--color-dim); }
-            .output-directory { color: var(--color-cyan); font-weight: bold;}
-            .output-file { color: var(--color-white); }
+            .output-error {
+                color: var(--color-red);
+            }
+            .output-success {
+                color: var(--color-green);
+            }
+            .output-warning {
+                color: var(--color-yellow);
+            }
+            .output-info {
+                color: var(--color-blue);
+            }
+            .output-cyan {
+                color: var(--color-cyan);
+            }
+            .output-blue {
+                color: var(--color-blue);
+            }
+            .output-magenta {
+                color: var(--color-magenta);
+            }
+            .output-yellow {
+                color: var(--color-yellow);
+            }
+            .output-red {
+                color: var(--color-red);
+            }
+            .output-dim {
+                color: var(--color-dim);
+            }
+            .output-directory {
+                color: var(--color-cyan);
+                font-weight: bold;
+            }
+            .output-file {
+                color: var(--color-white);
+            }
 
             .neofetch-key {
                 color: var(--color-cyan);
@@ -121,77 +168,134 @@
                 display: inline-block;
                 margin-right: 0.5rem;
             }
-
         </style>
         <script>
             // Configure Tailwind to understand our theme colors via CSS variables
-             tailwind.config = {
-                theme: { extend: {
+            tailwind.config = {
+                theme: {
+                    extend: {
                         colors: {
                             // Map names to the CSS variables for Tailwind utility classes
                             // Use the non-transparent background variable for utility classes
-                            background: 'var(--color-background-hex)', text: 'var(--color-text)',
-                            black: 'var(--color-black)', red: 'var(--color-red)',
-                            green: 'var(--color-green)', yellow: 'var(--color-yellow)',
-                            blue: 'var(--color-blue)', magenta: 'var(--color-magenta)',
-                            cyan: 'var(--color-cyan)', white: 'var(--color-white)',
-                            dim: 'var(--color-dim)',
-                            'prompt-user': 'var(--color-magenta)', 'prompt-host': 'var(--color-cyan)',
-                            'prompt-path': 'var(--color-blue)', 'prompt-char': 'var(--color-green)',
-                            'command': 'var(--color-white)', 'link': 'var(--color-blue)',
-                            'cursor': 'var(--color-green)',
-                            'neofetch-key': 'var(--color-cyan)',
-                            'value': 'var(--color-white)'
+                            background: "var(--color-background-hex)",
+                            text: "var(--color-text)",
+                            black: "var(--color-black)",
+                            red: "var(--color-red)",
+                            green: "var(--color-green)",
+                            yellow: "var(--color-yellow)",
+                            blue: "var(--color-blue)",
+                            magenta: "var(--color-magenta)",
+                            cyan: "var(--color-cyan)",
+                            white: "var(--color-white)",
+                            dim: "var(--color-dim)",
+                            "prompt-user": "var(--color-magenta)",
+                            "prompt-host": "var(--color-cyan)",
+                            "prompt-path": "var(--color-blue)",
+                            "prompt-char": "var(--color-green)",
+                            command: "var(--color-white)",
+                            link: "var(--color-blue)",
+                            cursor: "var(--color-green)",
+                            "neofetch-key": "var(--color-cyan)",
+                            value: "var(--color-white)",
                         },
-                        fontFamily: { mono: ['Fira Code', 'Courier New', 'monospace'], }
-                    } } }
+                        fontFamily: {
+                            mono: ["Fira Code", "Courier New", "monospace"],
+                        },
+                    },
+                },
+            };
         </script>
     </head>
     <body class="font-mono text-[15px] leading-normal antialiased">
-         <!-- Canvas for drawing the matrix effect -->
+        <!-- Canvas for drawing the matrix effect -->
         <canvas id="matrixCanvas"></canvas>
 
         <div id="app" class="h-screen flex flex-col" @click="focusInput">
-
             <!-- Terminal Output Area -->
-            <div ref="terminal" class="flex-grow overflow-y-auto overflow-x-hidden p-3 md:p-4">
-                 <div v-for="line in outputLines" :key="line.id" class="output-line mb-1 min-h-[1.5em] break-words">
-
+            <div
+                ref="terminal"
+                class="flex-grow overflow-y-auto overflow-x-hidden p-3 md:p-4"
+            >
+                <div
+                    v-for="line in outputLines"
+                    :key="line.id"
+                    class="output-line mb-1 min-h-[1.5em] break-words"
+                >
                     <!-- Neofetch Style Block -->
-                    <div v-if="line.type === 'neofetch'" class="flex flex-col sm:flex-row gap-4 md:gap-6 mb-2">
+                    <div
+                        v-if="line.type === 'neofetch'"
+                        class="flex flex-col sm:flex-row gap-4 md:gap-6 mb-2"
+                    >
                         <div class="flex-shrink-0 mx-auto sm:mx-0">
-                             <!-- Use a placeholder if icon.png not found. Create placeholder.png or remove onerror -->
-                             <img :src="line.data.imgPath"
-                                  @error="($event) => { $event.target.style.display='none'; console.warn('icon.png not found.') }"
-                                  alt="Icon"
-                                  class="w-24 h-auto md:w-32 object-contain">
+                            <!-- Use a placeholder if icon.png not found. Create placeholder.png or remove onerror -->
+                            <img
+                                :src="line.data.imgPath"
+                                @error="($event) => { $event.target.style.display='none'; console.warn('icon.png not found.') }"
+                                alt="Icon"
+                                class="w-24 h-auto md:w-32 object-contain"
+                            />
                         </div>
-                        <div class="flex-grow min-w-0"> <!-- Added min-w-0 for flex wrapping -->
-                             <div class="mb-1">
-                                <span class="text-prompt-user font-bold">{{ line.data.user }}</span><span class="text-text">@</span><span class="text-prompt-host">{{ line.data.host }}</span>
-                             </div>
-                            <div class="border-b border-dim/50 w-1/2 mb-2"></div> <!-- Dimmer border -->
-                             <div v-for="item in line.data.info" :key="item.key" class="flex items-start text-sm md:text-[15px]">
-                                 <span class="neofetch-key flex-shrink-0">{{ item.key }}:</span>
-                                 <!-- v-html needed for links, ensure content is trusted -->
-                                 <span class="text-value break-all" v-html="item.value"></span>
-                             </div>
+                        <div class="flex-grow min-w-0">
+                            <!-- Added min-w-0 for flex wrapping -->
+                            <div class="mb-1">
+                                <span class="text-prompt-user font-bold"
+                                    >{{ line.data.user }}</span
+                                ><span class="text-text">@</span
+                                ><span class="text-prompt-host"
+                                    >{{ line.data.host }}</span
+                                >
+                            </div>
+                            <div
+                                class="border-b border-dim/50 w-1/2 mb-2"
+                            ></div>
+                            <!-- Dimmer border -->
+                            <div
+                                v-for="item in line.data.info"
+                                :key="item.key"
+                                class="flex items-start text-sm md:text-[15px]"
+                            >
+                                <span class="neofetch-key flex-shrink-0"
+                                    >{{ item.key }}:</span
+                                >
+                                <!-- v-html needed for links, ensure content is trusted -->
+                                <span
+                                    class="text-value break-all"
+                                    v-html="item.value"
+                                ></span>
+                            </div>
                         </div>
-                     </div>
+                    </div>
 
                     <!-- Regular Command Echo -->
-                    <span v-else-if="line.type === 'command-echo'" class="opacity-90" v-html="line.html"></span>
-                     <!-- Other Output types (using displayedHtml for typing effect) -->
-                    <span v-else :class="['output-text', line.type ? 'output-' + line.type : '']" v-html="line.displayedHtml"></span>
-                 </div>
+                    <span
+                        v-else-if="line.type === 'command-echo'"
+                        class="opacity-90"
+                        v-html="line.html"
+                    ></span>
+                    <!-- Other Output types (using displayedHtml for typing effect) -->
+                    <span
+                        v-else
+                        :class="['output-text', line.type ? 'output-' + line.type : '']"
+                        v-html="line.displayedHtml"
+                    ></span>
+                </div>
             </div>
 
             <!-- Input Line -->
-            <div class="prompt-line flex items-baseline mt-1 p-3 md:p-4 pt-0 flex-shrink-0">
-                 <span class="prompt mr-2 whitespace-nowrap">
-                     <span class="prompt-user font-bold">{{ promptUser }}</span><span class="text-text">@</span><span class="prompt-host">{{ promptHost }}</span><span class="text-text">:</span><span class="prompt-path">{{ currentPath }}</span><span class="prompt-char font-bold ml-px">{{ promptChar }}</span>
-                 </span>
-                 <input
+            <div
+                class="prompt-line flex items-baseline mt-1 p-3 md:p-4 pt-0 flex-shrink-0"
+            >
+                <span class="prompt mr-2 whitespace-nowrap">
+                    <span class="prompt-user font-bold">{{ promptUser }}</span
+                    ><span class="text-text">@</span
+                    ><span class="prompt-host">{{ promptHost }}</span
+                    ><span class="text-text">:</span
+                    ><span class="prompt-path">{{ currentPath }}</span
+                    ><span class="prompt-char font-bold ml-px"
+                        >{{ promptChar }}</span
+                    >
+                </span>
+                <input
                     ref="commandInput"
                     type="text"
                     class="bg-transparent border-none text-command flex-grow outline-none p-0 h-[1.5em] min-w-0 font-mono text-[15px] caret-cursor"
@@ -201,8 +305,11 @@
                     @keydown.down.prevent="handleArrowDown"
                     @keydown.tab.prevent="handleTab"
                     @keydown.ctrl.l.prevent="clearOutput"
-                    autofocus autocomplete="off" spellcheck="false" autocapitalize="none"
-                 />
+                    autofocus
+                    autocomplete="off"
+                    spellcheck="false"
+                    autocapitalize="none"
+                />
             </div>
         </div>
 
@@ -210,16 +317,17 @@
             // --- CMatrix Canvas Logic ---
             // Runs immediately after the canvas and #app elements are available.
 
-            const canvas = document.getElementById('matrixCanvas');
-            const ctx = canvas.getContext('2d');
-             const appElement = document.getElementById('app'); // Get the app element
+            const canvas = document.getElementById("matrixCanvas");
+            const ctx = canvas.getContext("2d");
+            const appElement = document.getElementById("app"); // Get the app element
 
-            let width = canvas.width = window.innerWidth;
-            let height = canvas.height = window.innerHeight;
+            let width = (canvas.width = window.innerWidth);
+            let height = (canvas.height = window.innerHeight);
 
             // Japanese Katakana characters + numbers and symbols
-            const matrixChars = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789XYZ@#$%^&*()_+=-';
-            const characters = matrixChars.split('');
+            const matrixChars =
+                "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズヅブプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789XYZ@#$%^&*()_+=-";
+            const characters = matrixChars.split("");
 
             const fontSize = 16; // px
             let columns = Math.floor(width / fontSize);
@@ -230,37 +338,41 @@
             for (let x = 0; x < columns; x++) {
                 // Initialize drops with a random starting position, potentially below the screen
                 drops[x] = Math.floor(Math.random() * (height / fontSize)); // Start at a row within screen height
-                 // Optionally: drops[x] = Math.floor(Math.random() * (height / fontSize + 20)); // Start potentially below screen
+                // Optionally: drops[x] = Math.floor(Math.random() * (height / fontSize + 20)); // Start potentially below screen
             }
 
             let animationFrameId = null;
             let isMatrixEnabled = true; // State variable
 
             // Get the opaque background color from CSS variable
-             let opaqueBgColor = '';
-             let hasFetchedOpaqueColor = false;
+            let opaqueBgColor = "";
+            let hasFetchedOpaqueColor = false;
 
-             function fetchOpaqueBackgroundColor() {
-                 if (hasFetchedOpaqueColor) return; // Only fetch once
-                 const rootStyles = getComputedStyle(document.documentElement);
-                 opaqueBgColor = rootStyles.getPropertyValue('--color-background-hex').trim();
-                 hasFetchedOpaqueColor = true;
-                 console.log('Fetched opaque background color:', opaqueBgColor);
-             }
-
+            function fetchOpaqueBackgroundColor() {
+                if (hasFetchedOpaqueColor) return; // Only fetch once
+                const rootStyles = getComputedStyle(document.documentElement);
+                opaqueBgColor = rootStyles
+                    .getPropertyValue("--color-background-hex")
+                    .trim();
+                hasFetchedOpaqueColor = true;
+                console.log("Fetched opaque background color:", opaqueBgColor);
+            }
 
             // Drawing function
             function drawMatrix() {
                 // Semi-transparent black rectangle for trail
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.fillRect(0, 0, width, height);
 
                 // Character color and font
-                ctx.fillStyle = '#0F0'; // Green
-                ctx.font = fontSize + 'px monospace';
+                ctx.fillStyle = "#0F0"; // Green
+                ctx.font = fontSize + "px monospace";
 
                 for (let i = 0; i < drops.length; i++) {
-                    const text = characters[Math.floor(Math.random() * characters.length)];
+                    const text =
+                        characters[
+                            Math.floor(Math.random() * characters.length)
+                        ];
                     const y = drops[i] * fontSize;
                     ctx.fillText(text, i * fontSize, y);
 
@@ -274,9 +386,9 @@
                 }
 
                 if (isMatrixEnabled) {
-                   animationFrameId = requestAnimationFrame(drawMatrix);
+                    animationFrameId = requestAnimationFrame(drawMatrix);
                 } else {
-                   animationFrameId = null; // Ensure ID is null when stopped
+                    animationFrameId = null; // Ensure ID is null when stopped
                 }
             }
 
@@ -285,46 +397,47 @@
                 if (!isMatrixEnabled) {
                     isMatrixEnabled = true;
                     // Clear any lingering frame ID just in case
-                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    if (animationFrameId)
+                        cancelAnimationFrame(animationFrameId);
 
                     // Set app background back to the transparent version defined in CSS
                     // By removing the inline style set by stopMatrix
                     if (appElement) {
-                        appElement.style.backgroundColor = ''; // Remove inline style to use CSS rule
+                        appElement.style.backgroundColor = ""; // Remove inline style to use CSS rule
                     }
 
                     // Start the animation loop
                     animationFrameId = requestAnimationFrame(drawMatrix);
-                    console.log('Matrix effect enabled.');
+                    console.log("Matrix effect enabled.");
                 }
-                 // If already enabled, do nothing
+                // If already enabled, do nothing
             }
 
             // Function to stop the matrix animation
             function stopMatrix() {
-                 fetchOpaqueBackgroundColor(); // Ensure opaque color is fetched
+                fetchOpaqueBackgroundColor(); // Ensure opaque color is fetched
 
                 if (isMatrixEnabled) {
                     isMatrixEnabled = false;
-                     if (animationFrameId) {
+                    if (animationFrameId) {
                         cancelAnimationFrame(animationFrameId);
                         animationFrameId = null;
-                     }
+                    }
 
-                     // Change app background to opaque version using the fetched variable value
-                     if (appElement && opaqueBgColor) {
+                    // Change app background to opaque version using the fetched variable value
+                    if (appElement && opaqueBgColor) {
                         appElement.style.backgroundColor = opaqueBgColor;
-                     } else if (appElement) {
-                          // Fallback if variable failed to fetch
-                         appElement.style.backgroundColor = '#1a1b26'; // Hardcoded fallback
-                     }
+                    } else if (appElement) {
+                        // Fallback if variable failed to fetch
+                        appElement.style.backgroundColor = "#1a1b26"; // Hardcoded fallback
+                    }
 
-                     // Optional: Clear the canvas completely when stopped
-                     // ctx.clearRect(0, 0, width, height); // Use if you want blank background when stopped
+                    // Optional: Clear the canvas completely when stopped
+                    // ctx.clearRect(0, 0, width, height); // Use if you want blank background when stopped
 
-                    console.log('Matrix effect disabled.');
+                    console.log("Matrix effect disabled.");
                 }
-                 // If already disabled, do nothing
+                // If already disabled, do nothing
             }
 
             // Make control functions and state accessible globally for the Vue app
@@ -332,9 +445,8 @@
             window.stopMatrixEffect = stopMatrix;
             window.isMatrixEffectEnabled = () => isMatrixEnabled; // Provide a getter
 
-
             // Handle window resizing
-            window.addEventListener('resize', () => {
+            window.addEventListener("resize", () => {
                 // Update canvas dimensions first
                 width = canvas.width = window.innerWidth;
                 height = canvas.height = window.innerHeight;
@@ -347,7 +459,7 @@
                     // Initialize any new columns that might have been added
                     for (let x = 0; x < columns; x++) {
                         if (drops[x] === undefined) {
-                            drops[x] = Math.random() * height / fontSize; // Initialize new columns
+                            drops[x] = (Math.random() * height) / fontSize; // Initialize new columns
                         }
                     }
                 }
@@ -355,19 +467,17 @@
                 // will automatically draw on the new size. If disabled, nothing happens.
                 // Force a redraw frame on resize *only* if matrix is currently enabled AND no frame is scheduled
                 // (e.g. if animation was paused somehow during resize) - defensive check
-                 if (isMatrixEnabled && animationFrameId === null) {
-                      animationFrameId = requestAnimationFrame(drawMatrix);
-                 }
+                if (isMatrixEnabled && animationFrameId === null) {
+                    animationFrameId = requestAnimationFrame(drawMatrix);
+                }
             });
 
             // Start the animation initially when the DOM is ready.
             // The transparent background is handled by CSS.
-            document.addEventListener('DOMContentLoaded', () => {
-                 fetchOpaqueBackgroundColor(); // Fetch opaque color for later use
-                 startMatrix(); // Start the animation
+            document.addEventListener("DOMContentLoaded", () => {
+                fetchOpaqueBackgroundColor(); // Fetch opaque color for later use
+                startMatrix(); // Start the animation
             });
-
-
         </script>
 
         <script>
@@ -379,7 +489,7 @@
                 setup() {
                     // --- Reactive State ---
                     const outputLines = ref([]);
-                    const currentCommand = ref('');
+                    const currentCommand = ref("");
                     const commandHistory = reactive([]);
                     const historyIndex = ref(-1);
                     const fetchedProjects = ref(null);
@@ -391,23 +501,34 @@
                     const promptHost = "portfolio";
                     const currentPath = ref("~");
                     const promptChar = "$";
-                    const portfolioData = reactive({ // Define static portfolio data here
+                    const portfolioData = reactive({
+                        // Define static portfolio data here
                         name: "AxoGM",
                         title: "Developer | Planning | Working on Project",
                         contact: { email: "creategm10@gmail.com" },
                         social: {
                             github: "https://github.com/TheCreateGM",
-                            linkedin: "https://www.linkedin.com/in/axo-gm-9758832b0/",
-                            website: "http://axogmweb.unaux.com"
+                            website: "https://axogm.vercel.app/",
                         },
-                         about: [
+                        about: [
                             "Hello! I'm AxoGM. This is my interactive terminal portfolio.",
                             "I enjoy building things, learning new technologies, and solving problems.",
                             "Currently focused on web development and exploring software design patterns.",
                             "Use the commands below to learn more about me and my work:",
                             "help, about, projects, contact, social, skills, banner, clear, date, echo, pwd, ls, uname, whoami, matrix, sudo", // Added sudo to help
                         ],
-                         skills: [ "JavaScript", "Python", "HTML/CSS", "Vue.js", "Node.js", "Git", "SQL", "Bash", "Tailwind CSS", "Firebase"],
+                        skills: [
+                            "JavaScript",
+                            "Python",
+                            "HTML/CSS",
+                            "Vue.js",
+                            "Node.js",
+                            "Git",
+                            "SQL",
+                            "Bash",
+                            "Tailwind CSS",
+                            "Firebase",
+                        ],
                     });
 
                     // --- Template Refs ---
@@ -419,7 +540,7 @@
 
                     // Modified scrollToBottom to be simpler, closer to terminal
                     const scrollToBottom = () => {
-                         nextTick(() => {
+                        nextTick(() => {
                             const el = terminal.value;
                             if (el) {
                                 el.scrollTop = el.scrollHeight;
@@ -429,142 +550,208 @@
 
                     // Basic HTML Sanitization helper
                     const sanitizeHtml = (str) => {
-                         if (typeof str !== 'string') return String(str);
-                         // Replace basic HTML characters with entities
-                         return str.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                        if (typeof str !== "string") return String(str);
+                        // Replace basic HTML characters with entities
+                        return str
+                            .replace(/&/g, "&")
+                            .replace(/</g, "<")
+                            .replace(/>/g, ">");
                     };
 
-                     // Re-allow specific HTML after basic sanitization
+                    // Re-allow specific HTML after basic sanitization
                     const processAllowedHtml = (sanitizedStr) => {
-                         let processed = sanitizedStr;
-                         // This is a simplified approach. Be very careful with what you allow.
-                         // Revert specific entities back to tags/attributes only for known patterns
-                         processed = processed.replace(/<a href="([^"]*)" target="([^"]*)" class="([^"]*)">([^&]*)<\/a>/g, '<a href="$1" target="$2" class="$3">$4</a>');
-                         processed = processed.replace(/<span class="([^"]*)">([^&]*)<\/span>/g, '<span class="$1">$2</span>');
-                         // Add more if needed: processed = processed.replace(/<strong>([^&]*)<\/strong>/g, '<strong>$1</strong>');
-                         return processed;
+                        let processed = sanitizedStr;
+                        // This is a simplified approach. Be very careful with what you allow.
+                        // Revert specific entities back to tags/attributes only for known patterns
+                        processed = processed.replace(
+                            /<a href="([^"]*)" target="([^"]*)" class="([^"]*)">([^&]*)<\/a>/g,
+                            '<a href="$1" target="$2" class="$3">$4</a>',
+                        );
+                        processed = processed.replace(
+                            /<span class="([^"]*)">([^&]*)<\/span>/g,
+                            '<span class="$1">$2</span>',
+                        );
+                        // Add more if needed: processed = processed.replace(/<strong>([^&]*)<\/strong>/g, '<strong>$1</strong>');
+                        return processed;
                     };
-
 
                     // Appends instant output (like command echo or errors)
                     const appendOutput = (content, type = "text") => {
                         const newId = Date.now() + Math.random();
-                        if (type === 'neofetch') {
-                            if (typeof content !== 'object' || !content.imgPath) {
-                                console.error("Invalid data provided for neofetch type:", content);
-                                outputLines.value.push({ id: newId, type: 'error', html: sanitizeHtml("Error: Invalid banner data.")});
+                        if (type === "neofetch") {
+                            if (
+                                typeof content !== "object" ||
+                                !content.imgPath
+                            ) {
+                                console.error(
+                                    "Invalid data provided for neofetch type:",
+                                    content,
+                                );
+                                outputLines.value.push({
+                                    id: newId,
+                                    type: "error",
+                                    html: sanitizeHtml(
+                                        "Error: Invalid banner data.",
+                                    ),
+                                });
                             } else {
                                 // Neofetch data is already structured, pass it directly
-                                outputLines.value.push({ id: newId, type: 'neofetch', data: content });
+                                outputLines.value.push({
+                                    id: newId,
+                                    type: "neofetch",
+                                    data: content,
+                                });
                             }
-                        } else if (type === 'command-echo') {
+                        } else if (type === "command-echo") {
                             // Command echo is pre-formatted HTML, don't sanitize here, assume it's safe from getPromptHtml
                             // BUT sanitize the command text itself within the span
-                             outputLines.value.push({ id: newId, type, html: content }); // content includes the prompt + span already
+                            outputLines.value.push({
+                                id: newId,
+                                type,
+                                html: content,
+                            }); // content includes the prompt + span already
+                        } else {
+                            // For other types, sanitize and process allowed HTML instantly
+                            outputLines.value.push({
+                                id: newId,
+                                type,
+                                displayedHtml: processAllowedHtml(
+                                    sanitizeHtml(content),
+                                ),
+                                fullHtml: processAllowedHtml(
+                                    sanitizeHtml(content),
+                                ),
+                            }); // Store full html for consistency
                         }
-                        else {
-                             // For other types, sanitize and process allowed HTML instantly
-                            outputLines.value.push({ id: newId, type, displayedHtml: processAllowedHtml(sanitizeHtml(content)), fullHtml: processAllowedHtml(sanitizeHtml(content)) }); // Store full html for consistency
-                        }
-                         // Scroll instantly for non-typing output
+                        // Scroll instantly for non-typing output
                         scrollToBottom();
                     };
 
                     // Appends output with a typing animation
-                    const appendTypingOutput = (content, type = "text", speed = typewriterSpeed.value) => {
-                         const newId = Date.now() + Math.random();
-                         const sanitizedContent = sanitizeHtml(content);
-                         const fullHtmlContent = processAllowedHtml(sanitizedContent); // Process allowed HTML tags *before* typing
-                         // Create plain text version for typing by stripping allowed HTML tags
-                         const plainTextContent = sanitizedContent
-                                                 .replace(/<a[^&]*>([^&]*)<\/a>/g, '$1')
-                                                 .replace(/<span[^&]*>([^&]*)<\/span>/g, '$1')
-                                                  // Optionally decode basic entities like & etc. if you want them typed correctly
-                                                 .replace(/&/g, '&')
-                                                 .replace(/</g, '<')
-                                                 .replace(/>/g, '>');
+                    const appendTypingOutput = (
+                        content,
+                        type = "text",
+                        speed = typewriterSpeed.value,
+                    ) => {
+                        const newId = Date.now() + Math.random();
+                        const sanitizedContent = sanitizeHtml(content);
+                        const fullHtmlContent =
+                            processAllowedHtml(sanitizedContent); // Process allowed HTML tags *before* typing
+                        // Create plain text version for typing by stripping allowed HTML tags
+                        const plainTextContent = sanitizedContent
+                            .replace(/<a[^&]*>([^&]*)<\/a>/g, "$1")
+                            .replace(/<span[^&]*>([^&]*)<\/span>/g, "$1")
+                            // Optionally decode basic entities like & etc. if you want them typed correctly
+                            .replace(/&/g, "&")
+                            .replace(/</g, "<")
+                            .replace(/>/g, ">");
 
-
-                        const line = reactive({ // Use reactive for this object to easily update properties
+                        const line = reactive({
+                            // Use reactive for this object to easily update properties
                             id: newId,
                             type,
                             fullHtml: fullHtmlContent,
-                            displayedHtml: '', // Start empty
+                            displayedHtml: "", // Start empty
                             isTyping: true,
                             typingInterval: null,
                             charIndex: 0,
-                            plainText: plainTextContent
+                            plainText: plainTextContent,
                         });
 
-                         outputLines.value.push(line); // Add the line placeholder
+                        outputLines.value.push(line); // Add the line placeholder
 
-                         nextTick(() => {
+                        nextTick(() => {
                             scrollToBottom(); // Scroll immediately to show the new line placeholder
 
                             line.typingInterval = setInterval(() => {
-                                 if (line.charIndex < line.plainText.length) {
-                                    line.displayedHtml += line.plainText[line.charIndex];
+                                if (line.charIndex < line.plainText.length) {
+                                    line.displayedHtml +=
+                                        line.plainText[line.charIndex];
                                     line.charIndex++;
                                     // Scroll during typing, but not excessively
-                                    if (line.charIndex % 5 === 0 || line.charIndex === line.plainText.length -1) {
+                                    if (
+                                        line.charIndex % 5 === 0 ||
+                                        line.charIndex ===
+                                            line.plainText.length - 1
+                                    ) {
                                         scrollToBottom();
                                     }
-
-                                 } else {
-                                     // Typing finished, replace displayed with full HTML
+                                } else {
+                                    // Typing finished, replace displayed with full HTML
                                     clearInterval(line.typingInterval);
                                     line.typingInterval = null;
                                     line.displayedHtml = line.fullHtml; // Swap to HTML version
                                     line.isTyping = false;
                                     scrollToBottom(); // Final scroll
-                                 }
+                                }
                             }, speed);
                         });
                     };
 
-                    const getPromptHtml = (commandText = "") => { // Generates prompt HTML for echo, includes the command text
+                    const getPromptHtml = (commandText = "") => {
+                        // Generates prompt HTML for echo, includes the command text
                         const safeCommandText = sanitizeHtml(commandText); // Sanitize the input command text
                         return `<span class="prompt mr-2 whitespace-nowrap"><span class="prompt-user font-bold">${promptUser}</span><span class="text-text">@</span><span class="prompt-host">${promptHost}</span><span class="text-text">:</span><span class="prompt-path">${currentPath.value}</span><span class="prompt-char font-bold ml-px">${promptChar}</span></span><span class="text-command">${safeCommandText}</span>`;
-                     };
-
-                     const runCommand = (commandName, args) => { // Executes command logic
-                          if (commands[commandName]) {
-                             try {
-                                 // Commands now ideally return their output, which we then append
-                                 // Or, some commands might still call appendOutput/appendTypingOutput directly
-                                 commands[commandName](args); // Execute the command
-                             } catch (error) {
-                                console.error(`Cmd Err [${commandName}]:`, error);
-                                 // Errors should append instantly
-                                appendOutput(`Runtime error: ${sanitizeHtml(error.message)}`, "error");
-                             }
-                         } else {
-                             // Command not found message should append instantly
-                             appendOutput(`command not found: ${sanitizeHtml(commandName)}`, "error");
-                         }
-                     };
-
-                     const processCurrentCommand = () => { // Handles 'Enter' key press
-                         const commandStr = currentCommand.value.trim();
-                         if (!commandStr) { scrollToBottom(); return; }
-
-                         if (!commandHistory.includes(commandStr)) {
-                             commandHistory.push(commandStr);
-                         }
-                         historyIndex.value = commandHistory.length; // Reset history index
-
-                         // Echo command line instantly, includes the command text itself
-                         appendOutput(getPromptHtml(currentCommand.value), "command-echo");
-
-                         const parts = commandStr.split(" ");
-                         runCommand(parts[0].toLowerCase(), parts.slice(1));
-
-                         currentCommand.value = ""; // Clear input
-                         // Scrolling handled by append/appendTyping
                     };
-                    const clearOutput = () => { outputLines.value = []; };
 
-                    const getUptime = () => { // Calculates uptime string
+                    const runCommand = (commandName, args) => {
+                        // Executes command logic
+                        if (commands[commandName]) {
+                            try {
+                                // Commands now ideally return their output, which we then append
+                                // Or, some commands might still call appendOutput/appendTypingOutput directly
+                                commands[commandName](args); // Execute the command
+                            } catch (error) {
+                                console.error(
+                                    `Cmd Err [${commandName}]:`,
+                                    error,
+                                );
+                                // Errors should append instantly
+                                appendOutput(
+                                    `Runtime error: ${sanitizeHtml(error.message)}`,
+                                    "error",
+                                );
+                            }
+                        } else {
+                            // Command not found message should append instantly
+                            appendOutput(
+                                `command not found: ${sanitizeHtml(commandName)}`,
+                                "error",
+                            );
+                        }
+                    };
+
+                    const processCurrentCommand = () => {
+                        // Handles 'Enter' key press
+                        const commandStr = currentCommand.value.trim();
+                        if (!commandStr) {
+                            scrollToBottom();
+                            return;
+                        }
+
+                        if (!commandHistory.includes(commandStr)) {
+                            commandHistory.push(commandStr);
+                        }
+                        historyIndex.value = commandHistory.length; // Reset history index
+
+                        // Echo command line instantly, includes the command text itself
+                        appendOutput(
+                            getPromptHtml(currentCommand.value),
+                            "command-echo",
+                        );
+
+                        const parts = commandStr.split(" ");
+                        runCommand(parts[0].toLowerCase(), parts.slice(1));
+
+                        currentCommand.value = ""; // Clear input
+                        // Scrolling handled by append/appendTyping
+                    };
+                    const clearOutput = () => {
+                        outputLines.value = [];
+                    };
+
+                    const getUptime = () => {
+                        // Calculates uptime string
                         const uptimeMs = Date.now() - initialLoadTime;
                         const seconds = Math.floor(uptimeMs / 1000) % 60;
                         const minutes = Math.floor(uptimeMs / (1000 * 60)) % 60;
@@ -572,230 +759,475 @@
                         let str = "";
                         if (hours > 0) str += `${hours}h `;
                         if (minutes > 0 || hours > 0) str += `${minutes}m `;
-                         str += `${seconds}s`;
-                         return str.trim();
+                        str += `${seconds}s`;
+                        return str.trim();
                     };
 
                     // --- Command Definitions ---
                     // Modify commands to call appendTypingOutput or appendOutput as appropriate
-                     const commands = {
-                         help: () => {
-                            const available = Object.keys(commands).sort().join("  ");
+                    const commands = {
+                        help: () => {
+                            const available = Object.keys(commands)
+                                .sort()
+                                .join("  ");
                             appendTypingOutput("Available commands:", "info");
                             appendTypingOutput(available, "text");
-                            appendTypingOutput(`\nUp/Down for history, Tab complete, Ctrl+L clear.`, "dim");
-                         },
-                         about: () => {
-                            appendTypingOutput(`--- About ${portfolioData.name} ---`, "info");
-                            if (portfolioData.title) appendTypingOutput(`${portfolioData.title}`, "cyan");
-                            portfolioData.about.forEach(line => appendTypingOutput(`> ${line}`));
-                         },
-                         banner: () => { // Constructs and outputs Neofetch data (instant)
-                             let os = "WebApp";
-                             const ua = navigator.userAgent;
-                             if (ua.includes("Win")) os = "Windows"; else if (ua.includes("Mac")) os = "MacOS"; else if (ua.includes("Linux")) os = "Linux"; else if (ua.includes("Android")) os = "Android"; else if (ua.includes("like Mac")) os = "iOS";
+                            appendTypingOutput(
+                                `\nUp/Down for history, Tab complete, Ctrl+L clear.`,
+                                "dim",
+                            );
+                        },
+                        about: () => {
+                            appendTypingOutput(
+                                `--- About ${portfolioData.name} ---`,
+                                "info",
+                            );
+                            if (portfolioData.title)
+                                appendTypingOutput(
+                                    `${portfolioData.title}`,
+                                    "cyan",
+                                );
+                            portfolioData.about.forEach((line) =>
+                                appendTypingOutput(`> ${line}`),
+                            );
+                        },
+                        banner: () => {
+                            // Constructs and outputs Neofetch data (instant)
+                            let os = "WebApp";
+                            const ua = navigator.userAgent;
+                            if (ua.includes("Win")) os = "Windows";
+                            else if (ua.includes("Mac")) os = "MacOS";
+                            else if (ua.includes("Linux")) os = "Linux";
+                            else if (ua.includes("Android")) os = "Android";
+                            else if (ua.includes("like Mac")) os = "iOS";
 
-                             const neofetchData = {
-                                imgPath: './icon.png', // Ensure this exists!
-                                user: promptUser, host: promptHost,
+                            const neofetchData = {
+                                imgPath: "./icon.png", // Ensure this exists!
+                                user: promptUser,
+                                host: promptHost,
                                 info: [
-                                     { key: "OS", value: sanitizeHtml(os) },
-                                    { key: "Portfolio", value: sanitizeHtml(portfolioData.name) },
-                                     { key: "Status", value: sanitizeHtml(portfolioData.title) },
-                                    { key: "Contact", value: `<a href="mailto:${sanitizeHtml(portfolioData.contact.email)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.contact.email)}</a>` }, // Added target="_blank"
-                                    { key: "GitHub", value: `<a href="${sanitizeHtml(portfolioData.social.github)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.social.github)}</a>` },
-                                     { key: "LinkedIn", value: `<a href="${sanitizeHtml(portfolioData.social.linkedin)}" target="_blank" class="text-link underline hover:no-underline">Visit Profile</a>` },
-                                     { key: "Skills", value: sanitizeHtml((portfolioData.skills || []).slice(0, 8).join(', ') + (portfolioData.skills.length > 8 ? '...' : '')) }, // Show more skills
-                                     { key: "Shell", value: "VueTerm" },
+                                    { key: "OS", value: sanitizeHtml(os) },
+                                    {
+                                        key: "Portfolio",
+                                        value: sanitizeHtml(portfolioData.name),
+                                    },
+                                    {
+                                        key: "Status",
+                                        value: sanitizeHtml(
+                                            portfolioData.title,
+                                        ),
+                                    },
+                                    {
+                                        key: "Contact",
+                                        value: `<a href="mailto:${sanitizeHtml(portfolioData.contact.email)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.contact.email)}</a>`,
+                                    }, // Added target="_blank"
+                                    {
+                                        key: "GitHub",
+                                        value: `<a href="${sanitizeHtml(portfolioData.social.github)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.social.github)}</a>`,
+                                    },
+                                    {
+                                        key: "Skills",
+                                        value: sanitizeHtml(
+                                            (portfolioData.skills || [])
+                                                .slice(0, 8)
+                                                .join(", ") +
+                                                (portfolioData.skills.length > 8
+                                                    ? "..."
+                                                    : ""),
+                                        ),
+                                    }, // Show more skills
+                                    { key: "Shell", value: "VueTerm" },
                                     { key: "Uptime", value: getUptime() },
-                                     { key: "Theme", value: "TokyoNight-ish" }
-                                 ]
-                             };
-                              // Banner is complex structure, append instantly
-                             appendOutput(neofetchData, 'neofetch');
-                         },
-                         projects: () => { // Renders fetched GitHub projects (typing)
-                             appendTypingOutput("--- GitHub Projects ---", "info");
-                             const projects = fetchedProjects.value;
-                             if (projects instanceof Error) appendTypingOutput(`Error: ${sanitizeHtml(projects.message)}`, "error");
-                             else if (projects === null) appendTypingOutput("Loading projects or fetch failed...", "warning");
-                             else if (!Array.isArray(projects)) appendTypingOutput("Project data format error.", "error");
-                             else if (projects.length === 0) appendTypingOutput(`No public repositories found for ${githubUsername.value || 'user'}.`, "warning");
-                             else {
-                                 projects.forEach(p => {
-                                    let langClass = 'dim';
-                                    if (p.language) { const langLower = p.language.toLowerCase(); if (langLower === 'javascript') langClass = 'yellow'; else if (langLower === 'python') langClass = 'blue'; else if (langLower === 'html') langClass = 'red'; else if (langLower === 'css') langClass = 'magenta'; else if (langLower === 'typescript') langClass = 'blue'; else if (langLower === 'shell') langClass = 'green'; }
-                                     // Sanitize project details individually before combining
-                                     const safeName = sanitizeHtml(p.name);
-                                     const safeLang = sanitizeHtml(p.language || "N/A");
-                                     const safeDesc = sanitizeHtml(p.description || "No description.");
-                                     const safeUrl = sanitizeHtml(p.url);
+                                    { key: "Theme", value: "TokyoNight-ish" },
+                                ],
+                            };
+                            // Banner is complex structure, append instantly
+                            appendOutput(neofetchData, "neofetch");
+                        },
+                        projects: () => {
+                            // Renders fetched GitHub projects (typing)
+                            appendTypingOutput(
+                                "--- GitHub Projects ---",
+                                "info",
+                            );
+                            const projects = fetchedProjects.value;
+                            if (projects instanceof Error)
+                                appendTypingOutput(
+                                    `Error: ${sanitizeHtml(projects.message)}`,
+                                    "error",
+                                );
+                            else if (projects === null)
+                                appendTypingOutput(
+                                    "Loading projects or fetch failed...",
+                                    "warning",
+                                );
+                            else if (!Array.isArray(projects))
+                                appendTypingOutput(
+                                    "Project data format error.",
+                                    "error",
+                                );
+                            else if (projects.length === 0)
+                                appendTypingOutput(
+                                    `No public repositories found for ${githubUsername.value || "user"}.`,
+                                    "warning",
+                                );
+                            else {
+                                projects.forEach((p) => {
+                                    let langClass = "dim";
+                                    if (p.language) {
+                                        const langLower =
+                                            p.language.toLowerCase();
+                                        if (langLower === "javascript")
+                                            langClass = "yellow";
+                                        else if (langLower === "python")
+                                            langClass = "blue";
+                                        else if (langLower === "html")
+                                            langClass = "red";
+                                        else if (langLower === "css")
+                                            langClass = "magenta";
+                                        else if (langLower === "typescript")
+                                            langClass = "blue";
+                                        else if (langLower === "shell")
+                                            langClass = "green";
+                                    }
+                                    // Sanitize project details individually before combining
+                                    const safeName = sanitizeHtml(p.name);
+                                    const safeLang = sanitizeHtml(
+                                        p.language || "N/A",
+                                    );
+                                    const safeDesc = sanitizeHtml(
+                                        p.description || "No description.",
+                                    );
+                                    const safeUrl = sanitizeHtml(p.url);
 
                                     let lineHtml = ` <span class="output-success">•</span> <span class="output-file">${safeName}</span> <span class="output-${langClass}">[${safeLang}]</span> <span class="output-yellow">(★ ${p.stars})</span>: ${safeDesc}`;
-                                     // Ensure links open in a new tab
-                                    if (p.url) lineHtml += ` (<a href="${safeUrl}" target="_blank" class="text-link underline hover:no-underline">Link</a>)`;
+                                    // Ensure links open in a new tab
+                                    if (p.url)
+                                        lineHtml += ` (<a href="${safeUrl}" target="_blank" class="text-link underline hover:no-underline">Link</a>)`;
                                     appendTypingOutput(lineHtml); // Use appendTypingOutput
-                                 });
-                                 appendTypingOutput(`\n(Showing top ${projects.length} updated public repos excluding forks)`, "dim");
-                             }
-                         },
-                        contact: () => {
-                             appendTypingOutput("--- Contact ---", "info");
-                             if (portfolioData.contact.email) appendTypingOutput(`Email: <a href="mailto:${sanitizeHtml(portfolioData.contact.email)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.contact.email)}</a>`);
-                             else appendTypingOutput("No email provided.", "warning");
-                         },
-                        social: () => {
-                             appendTypingOutput("--- Social Links ---", "info");
-                             const entries = Object.entries(portfolioData.social);
-                             if (entries.length === 0) appendTypingOutput("None provided.", "warning");
-                             else entries.forEach(([p, url]) => {
-                                 const safeUrl = sanitizeHtml(url);
-                                 if (url) appendTypingOutput(`<span class="output-cyan">${sanitizeHtml(p.charAt(0).toUpperCase() + p.slice(1))}:</span> <a href="${safeUrl}" target="_blank" class="text-link underline hover:no-underline">${safeUrl}</a>`);
-                             });
-                         },
-                         skills: () => {
-                            appendTypingOutput("--- Skills ---", "info");
-                            if (!portfolioData.skills?.length) appendTypingOutput("None listed.", "warning");
-                            else {
-                               // Sanitize skills before joining
-                               const skillsHtml = portfolioData.skills.map((skill, i) => { const cls = i % 3 === 0 ? 'cyan' : (i % 3 === 1 ? 'yellow' : 'magenta'); return `<span class="output-${cls}">${sanitizeHtml(skill)}</span>`; }).join('<span class="output-dim"> | </span>');
-                               appendTypingOutput(skillsHtml);
+                                });
+                                appendTypingOutput(
+                                    `\n(Showing top ${projects.length} updated public repos excluding forks)`,
+                                    "dim",
+                                );
                             }
-                         },
-                         clear: clearOutput, // Instant
-                         date: () => { appendTypingOutput(new Date().toLocaleString(), 'success'); },
-                         echo: (args) => { appendTypingOutput(sanitizeHtml(args.join(" "))); },
-                         pwd: () => { appendTypingOutput(`/home/${promptUser}`, 'info'); },
-                         ls: () => { // Typing, but uses instant appendOutput for colored directories/files
+                        },
+                        contact: () => {
+                            appendTypingOutput("--- Contact ---", "info");
+                            if (portfolioData.contact.email)
+                                appendTypingOutput(
+                                    `Email: <a href="mailto:${sanitizeHtml(portfolioData.contact.email)}" target="_blank" class="text-link underline hover:no-underline">${sanitizeHtml(portfolioData.contact.email)}</a>`,
+                                );
+                            else
+                                appendTypingOutput(
+                                    "No email provided.",
+                                    "warning",
+                                );
+                        },
+                        social: () => {
+                            appendTypingOutput("--- Social Links ---", "info");
+                            const entries = Object.entries(
+                                portfolioData.social,
+                            );
+                            if (entries.length === 0)
+                                appendTypingOutput("None provided.", "warning");
+                            else
+                                entries.forEach(([p, url]) => {
+                                    const safeUrl = sanitizeHtml(url);
+                                    if (url)
+                                        appendTypingOutput(
+                                            `<span class="output-cyan">${sanitizeHtml(p.charAt(0).toUpperCase() + p.slice(1))}:</span> <a href="${safeUrl}" target="_blank" class="text-link underline hover:no-underline">${safeUrl}</a>`,
+                                        );
+                                });
+                        },
+                        skills: () => {
+                            appendTypingOutput("--- Skills ---", "info");
+                            if (!portfolioData.skills?.length)
+                                appendTypingOutput("None listed.", "warning");
+                            else {
+                                // Sanitize skills before joining
+                                const skillsHtml = portfolioData.skills
+                                    .map((skill, i) => {
+                                        const cls =
+                                            i % 3 === 0
+                                                ? "cyan"
+                                                : i % 3 === 1
+                                                  ? "yellow"
+                                                  : "magenta";
+                                        return `<span class="output-${cls}">${sanitizeHtml(skill)}</span>`;
+                                    })
+                                    .join(
+                                        '<span class="output-dim"> | </span>',
+                                    );
+                                appendTypingOutput(skillsHtml);
+                            }
+                        },
+                        clear: clearOutput, // Instant
+                        date: () => {
+                            appendTypingOutput(
+                                new Date().toLocaleString(),
+                                "success",
+                            );
+                        },
+                        echo: (args) => {
+                            appendTypingOutput(sanitizeHtml(args.join(" ")));
+                        },
+                        pwd: () => {
+                            appendTypingOutput(`/home/${promptUser}`, "info");
+                        },
+                        ls: () => {
+                            // Typing, but uses instant appendOutput for colored directories/files
                             // Re-implement ls to use typing effect on full line
-                            appendTypingOutput(`<span class='output-directory'>drwxr-xr-x</span> about`, 'text');
-                            appendTypingOutput(`<span class='output-directory'>drwxr-xr-x</span> projects`, 'text');
-                            appendTypingOutput(`<span class='output-file'>-rw-r--r--</span> contact`, 'text');
-                            appendTypingOutput(`<span class='output-file'>-rw-r--r--</span> social`, 'text');
-                             appendTypingOutput("\nUse commands to view.", "dim");
-                         },
-                         uname: () => { appendTypingOutput(`VueTerm v2.5 (Vue3/JS)`, 'info'); }, // Updated version
-                         whoami: () => { appendTypingOutput(promptUser, 'magenta'); },
-                         sudo: (args) => {
-                             const command = args.join(" ");
-                             if (command.toLowerCase() === "pleasesudome") { // Example: a "secret" command
-                                 appendTypingOutput("Okay, fine. Running command with elevated... just kidding!", "warning");
-                                 // Could potentially run a *safe* internal command here, e.g., `commands.help()`
-                             } else {
-                                appendTypingOutput(`Permission denied: you are not in the sudoers file. This incident will be reported.`, "error");
-                             }
-                         },
-                         // Command to toggle the matrix effect
-                          matrix: (args) => {
-                              // Allow 'on' or 'off' arguments
-                              const arg = args[0]?.toLowerCase();
+                            appendTypingOutput(
+                                `<span class='output-directory'>drwxr-xr-x</span> about`,
+                                "text",
+                            );
+                            appendTypingOutput(
+                                `<span class='output-directory'>drwxr-xr-x</span> projects`,
+                                "text",
+                            );
+                            appendTypingOutput(
+                                `<span class='output-file'>-rw-r--r--</span> contact`,
+                                "text",
+                            );
+                            appendTypingOutput(
+                                `<span class='output-file'>-rw-r--r--</span> social`,
+                                "text",
+                            );
+                            appendTypingOutput(
+                                "\nUse commands to view.",
+                                "dim",
+                            );
+                        },
+                        uname: () => {
+                            appendTypingOutput(
+                                `VueTerm v2.5 (Vue3/JS)`,
+                                "info",
+                            );
+                        }, // Updated version
+                        whoami: () => {
+                            appendTypingOutput(promptUser, "magenta");
+                        },
+                        sudo: (args) => {
+                            const command = args.join(" ");
+                            if (command.toLowerCase() === "pleasesudome") {
+                                // Example: a "secret" command
+                                appendTypingOutput(
+                                    "Okay, fine. Running command with elevated... just kidding!",
+                                    "warning",
+                                );
+                                // Could potentially run a *safe* internal command here, e.g., `commands.help()`
+                            } else {
+                                appendTypingOutput(
+                                    `Permission denied: you are not in the sudoers file. This incident will be reported.`,
+                                    "error",
+                                );
+                            }
+                        },
+                        // Command to toggle the matrix effect
+                        matrix: (args) => {
+                            // Allow 'on' or 'off' arguments
+                            const arg = args[0]?.toLowerCase();
 
-                              if (arg === 'on') {
-                                   if (window.isMatrixEffectEnabled && window.isMatrixEffectEnabled()) {
-                                       appendOutput("Matrix effect is already enabled.", "warning");
-                                   } else if (window.startMatrixEffect) {
-                                       window.startMatrixEffect(); // Call the global function
-                                       appendOutput("Matrix effect enabled.", "info");
-                                   } else {
-                                       appendOutput("Matrix control functions not available.", "error");
-                                   }
-                              } else if (arg === 'off') {
-                                   if (window.isMatrixEffectEnabled && !window.isMatrixEffectEnabled()) {
-                                        appendOutput("Matrix effect is already disabled.", "warning");
-                                   } else if (window.stopMatrixEffect) {
-                                       window.stopMatrixEffect(); // Call the global function
-                                       appendOutput("Matrix effect disabled. Background set to solid.", "info"); // Added detail
-                                   } else {
-                                       appendOutput("Matrix control functions not available.", "error");
-                                   }
-                              }
-                              else {
-                                  // Toggle behavior if no args or invalid arg
-                                  if (window.isMatrixEffectEnabled && window.isMatrixEffectEnabled()) {
-                                      window.stopMatrixEffect();
-                                      appendOutput("Matrix effect disabled. Background set to solid.", "info"); // Added detail
-                                  } else if (window.startMatrixEffect) {
-                                      window.startMatrixEffect();
-                                      appendOutput("Matrix effect enabled.", "info");
-                                  } else {
-                                      appendOutput("Matrix control functions not available.", "error");
-                                  }
-                              }
-                          },
-                          cmatrix: (args) => { commands.matrix(args); } // Alias
-                     };
+                            if (arg === "on") {
+                                if (
+                                    window.isMatrixEffectEnabled &&
+                                    window.isMatrixEffectEnabled()
+                                ) {
+                                    appendOutput(
+                                        "Matrix effect is already enabled.",
+                                        "warning",
+                                    );
+                                } else if (window.startMatrixEffect) {
+                                    window.startMatrixEffect(); // Call the global function
+                                    appendOutput(
+                                        "Matrix effect enabled.",
+                                        "info",
+                                    );
+                                } else {
+                                    appendOutput(
+                                        "Matrix control functions not available.",
+                                        "error",
+                                    );
+                                }
+                            } else if (arg === "off") {
+                                if (
+                                    window.isMatrixEffectEnabled &&
+                                    !window.isMatrixEffectEnabled()
+                                ) {
+                                    appendOutput(
+                                        "Matrix effect is already disabled.",
+                                        "warning",
+                                    );
+                                } else if (window.stopMatrixEffect) {
+                                    window.stopMatrixEffect(); // Call the global function
+                                    appendOutput(
+                                        "Matrix effect disabled. Background set to solid.",
+                                        "info",
+                                    ); // Added detail
+                                } else {
+                                    appendOutput(
+                                        "Matrix control functions not available.",
+                                        "error",
+                                    );
+                                }
+                            } else {
+                                // Toggle behavior if no args or invalid arg
+                                if (
+                                    window.isMatrixEffectEnabled &&
+                                    window.isMatrixEffectEnabled()
+                                ) {
+                                    window.stopMatrixEffect();
+                                    appendOutput(
+                                        "Matrix effect disabled. Background set to solid.",
+                                        "info",
+                                    ); // Added detail
+                                } else if (window.startMatrixEffect) {
+                                    window.startMatrixEffect();
+                                    appendOutput(
+                                        "Matrix effect enabled.",
+                                        "info",
+                                    );
+                                } else {
+                                    appendOutput(
+                                        "Matrix control functions not available.",
+                                        "error",
+                                    );
+                                }
+                            }
+                        },
+                        cmatrix: (args) => {
+                            commands.matrix(args);
+                        }, // Alias
+                    };
 
                     // --- GitHub Fetch Logic (using native fetch) ---
                     const fetchGitHubProjects = async (username) => {
-                         if (!username) return new Error("GitHub username missing.");
-                         // Increase per_page limit slightly to get more repos, max is 100 per_page
-                         const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=100`;
-                         appendOutput(`Fetching repos for ${sanitizeHtml(username)}...`, 'warning'); // Instant status
-                         try {
-                             const response = await fetch(apiUrl);
-                             if (!response.ok) return new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
-                             const data = await response.json();
-                             if (!Array.isArray(data)) return new Error("Unexpected API response format.");
-                              // Filter out forks if you only want original projects
-                              const originalRepos = data.filter(repo => !repo.fork);
-                             // Instant confirmation after fetch completes
-                             appendOutput(`Fetched ${originalRepos.length} public repos (excluding forks).`, 'success');
-                             return originalRepos.map(repo => ({ name: repo.name, description: repo.description || "No description.", url: repo.html_url, stars: repo.stargazers_count, language: repo.language || "N/A", fork: repo.fork }));
-                         } catch (error) {
-                             console.error("GitHub Fetch Error:", error);
-                             const errorMsg = (error instanceof TypeError) ? "Network error or CORS issue (check GitHub API status)." : `Fetch exception: ${error.message}`;
-                             // Error message is instant
-                             appendOutput(`Error fetching projects: ${sanitizeHtml(errorMsg)}`, "error");
-                             return new Error(errorMsg); // Still return error object for state
-                         }
+                        if (!username)
+                            return new Error("GitHub username missing.");
+                        // Increase per_page limit slightly to get more repos, max is 100 per_page
+                        const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=25`;
+                        appendOutput(
+                            `Fetching repos for ${sanitizeHtml(username)}...`,
+                            "warning",
+                        ); // Instant status
+                        try {
+                            const response = await fetch(apiUrl);
+                            if (!response.ok)
+                                return new Error(
+                                    `GitHub API Error: ${response.status} ${response.statusText}`,
+                                );
+                            const data = await response.json();
+                            if (!Array.isArray(data))
+                                return new Error(
+                                    "Unexpected API response format.",
+                                );
+                            // Filter out forks if you only want original projects
+                            const originalRepos = data.filter(
+                                (repo) => !repo.fork,
+                            );
+                            // Instant confirmation after fetch completes
+                            appendOutput(
+                                `Fetched ${originalRepos.length} public repos (excluding forks).`,
+                                "success",
+                            );
+                            return originalRepos.map((repo) => ({
+                                name: repo.name,
+                                description:
+                                    repo.description || "No description.",
+                                url: repo.html_url,
+                                stars: repo.stargazers_count,
+                                language: repo.language || "N/A",
+                                fork: repo.fork,
+                            }));
+                        } catch (error) {
+                            console.error("GitHub Fetch Error:", error);
+                            const errorMsg =
+                                error instanceof TypeError
+                                    ? "Network error or CORS issue (check GitHub API status)."
+                                    : `Fetch exception: ${error.message}`;
+                            // Error message is instant
+                            appendOutput(
+                                `Error fetching projects: ${sanitizeHtml(errorMsg)}`,
+                                "error",
+                            );
+                            return new Error(errorMsg); // Still return error object for state
+                        }
                     };
 
                     // --- Input Event Handlers ---
                     const handleEnter = () => processCurrentCommand();
                     const handleArrowUp = () => {
                         if (commandHistory.length === 0) return;
-                         if (historyIndex.value === commandHistory.length && currentCommand.value !== commandHistory[commandHistory.length - 1]) {
-                             historyIndex.value = commandHistory.length - 1;
-                         } else {
-                             historyIndex.value = Math.max(0, historyIndex.value - 1);
-                         }
-                        currentCommand.value = commandHistory[historyIndex.value] ?? "";
-                        nextTick(() => commandInput.value?.setSelectionRange(currentCommand.value.length, currentCommand.value.length));
-                     };
+                        if (
+                            historyIndex.value === commandHistory.length &&
+                            currentCommand.value !==
+                                commandHistory[commandHistory.length - 1]
+                        ) {
+                            historyIndex.value = commandHistory.length - 1;
+                        } else {
+                            historyIndex.value = Math.max(
+                                0,
+                                historyIndex.value - 1,
+                            );
+                        }
+                        currentCommand.value =
+                            commandHistory[historyIndex.value] ?? "";
+                        nextTick(() =>
+                            commandInput.value?.setSelectionRange(
+                                currentCommand.value.length,
+                                currentCommand.value.length,
+                            ),
+                        );
+                    };
                     const handleArrowDown = () => {
-                        if (commandHistory.length === 0 || historyIndex.value >= commandHistory.length - 1) {
+                        if (
+                            commandHistory.length === 0 ||
+                            historyIndex.value >= commandHistory.length - 1
+                        ) {
                             historyIndex.value = commandHistory.length;
                             currentCommand.value = "";
                             return;
                         }
                         historyIndex.value++;
-                        currentCommand.value = commandHistory[historyIndex.value] ?? "";
-                        nextTick(() => commandInput.value?.setSelectionRange(currentCommand.value.length, currentCommand.value.length));
-                     };
+                        currentCommand.value =
+                            commandHistory[historyIndex.value] ?? "";
+                        nextTick(() =>
+                            commandInput.value?.setSelectionRange(
+                                currentCommand.value.length,
+                                currentCommand.value.length,
+                            ),
+                        );
+                    };
                     const handleTab = () => {
-                         const inputVal = currentCommand.value.trim().toLowerCase();
-                         if (!inputVal) return;
+                        const inputVal = currentCommand.value
+                            .trim()
+                            .toLowerCase();
+                        if (!inputVal) return;
 
                         const parts = inputVal.split(" ");
                         const currentPart = parts.pop(); // Get the last word
 
-                         const possibilities = Object.keys(commands)
-                                             .filter(cmd => cmd.startsWith(currentPart));
+                        const possibilities = Object.keys(commands).filter(
+                            (cmd) => cmd.startsWith(currentPart),
+                        );
 
-                         if (possibilities.length === 1) {
-                             // Replace the last part with the completion + space
-                             parts.push(possibilities[0]);
-                             currentCommand.value = parts.join(" ") + " ";
-                         }
-                         else if (possibilities.length > 1) {
-                             // Echo command and list possibilities instantly
-                             appendOutput(getPromptHtml(currentCommand.value), "command-echo");
-                              // Join possibilities with spaces for display
-                             appendOutput(possibilities.join("    "), "info");
-                         }
-                          // Keep focus on input after tab
-                         nextTick(() => focusInput());
-                     };
+                        if (possibilities.length === 1) {
+                            // Replace the last part with the completion + space
+                            parts.push(possibilities[0]);
+                            currentCommand.value = parts.join(" ") + " ";
+                        } else if (possibilities.length > 1) {
+                            // Echo command and list possibilities instantly
+                            appendOutput(
+                                getPromptHtml(currentCommand.value),
+                                "command-echo",
+                            );
+                            // Join possibilities with spaces for display
+                            appendOutput(possibilities.join("    "), "info");
+                        }
+                        // Keep focus on input after tab
+                        nextTick(() => focusInput());
+                    };
 
                     // --- Component Lifecycle Hook (Initialization) ---
                     onMounted(async () => {
@@ -806,26 +1238,48 @@
                         let ghUser = null;
                         if (portfolioData.social?.github) {
                             try {
-                                const url = new URL(portfolioData.social.github);
-                                ghUser = url.pathname.split('/').filter(Boolean).pop();
-                                if(!ghUser) throw new Error("Cannot extract user");
+                                const url = new URL(
+                                    portfolioData.social.github,
+                                );
+                                ghUser = url.pathname
+                                    .split("/")
+                                    .filter(Boolean)
+                                    .pop();
+                                if (!ghUser)
+                                    throw new Error("Cannot extract user");
                                 console.log(`Detected GitHub user: ${ghUser}`);
-                            } catch(e) {
-                                appendOutput(`Warning: Invalid GitHub URL in portfolioData.social.github`, "warning");
-                                console.warn("Invalid GitHub URL:", portfolioData.social.github, e);
-                             }
+                            } catch (e) {
+                                appendOutput(
+                                    `Warning: Invalid GitHub URL in portfolioData.social.github`,
+                                    "warning",
+                                );
+                                console.warn(
+                                    "Invalid GitHub URL:",
+                                    portfolioData.social.github,
+                                    e,
+                                );
+                            }
                         }
 
                         if (ghUser) {
-                             githubUsername.value = ghUser;
-                             fetchedProjects.value = await fetchGitHubProjects(ghUser);
-                             // Error message is already appended by fetchGitHubProjects
+                            githubUsername.value = ghUser;
+                            fetchedProjects.value =
+                                await fetchGitHubProjects(ghUser);
+                            // Error message is already appended by fetchGitHubProjects
                         } else {
-                            appendOutput("GitHub user not configured in portfolioData. 'projects' unavailable.", "warning");
-                            fetchedProjects.value = new Error("GitHub user not configured."); // Store error state
+                            appendOutput(
+                                "GitHub user not configured in portfolioData. 'projects' unavailable.",
+                                "warning",
+                            );
+                            fetchedProjects.value = new Error(
+                                "GitHub user not configured.",
+                            ); // Store error state
                         }
 
-                        appendTypingOutput(`Type 'help' for commands.`, "success"); // Type this message
+                        appendTypingOutput(
+                            `Type 'help' for commands.`,
+                            "success",
+                        ); // Type this message
                         focusInput();
                         scrollToBottom(); // Ensure focus and initial scroll
                         console.log("Terminal Initialized.");
@@ -833,14 +1287,24 @@
 
                     // --- Expose to Template ---
                     return {
-                        outputLines, currentCommand, promptUser, promptHost,
-                        currentPath, promptChar, terminal, commandInput,
-                        focusInput, handleEnter, handleArrowUp, handleArrowDown,
-                        handleTab, clearOutput
+                        outputLines,
+                        currentCommand,
+                        promptUser,
+                        promptHost,
+                        currentPath,
+                        promptChar,
+                        terminal,
+                        commandInput,
+                        focusInput,
+                        handleEnter,
+                        handleArrowUp,
+                        handleArrowDown,
+                        handleTab,
+                        clearOutput,
                     };
-                }
-            }).mount('#app');
-
+                },
+            }).mount("#app");
         </script>
     </body>
 </html>
+
